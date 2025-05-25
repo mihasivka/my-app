@@ -1,5 +1,7 @@
 This is my Systems 3 Project
 
+run to start app
+
 ```bash
 npm run dev
 
