@@ -7,6 +7,8 @@ import React, { useState, useRef, useEffect } from "react";
 export default function Home() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -18,6 +20,37 @@ export default function Home() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Handle form submit
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    const form = e.currentTarget;
+    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
+    const username = (form.elements.namedItem("username") as HTMLInputElement).value;
+    const password = (form.elements.namedItem("password") as HTMLInputElement).value;
+    const repassword = (form.elements.namedItem("repassword") as HTMLInputElement).value;
+
+    if (password !== repassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    const res = await fetch("/api/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, username, password }),
+    });
+
+    if (res.ok) {
+      setSuccess("Signup successful! You can now log in.");
+      form.reset();
+    } else {
+      const data = await res.json();
+      setError(data.error || "Signup failed.");
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-400 font-sans">
@@ -95,11 +128,16 @@ export default function Home() {
 
       <main className="flex-1 flex flex-col text-black font-sans">
         <div className="text-4xl w-full p-2 font-bold text-center text-blue-700 drop-shadow">
-          Sign Up to create your own courses and learn form others!
+          Sign Up to create your own courses and learn from others!
         </div>
         <div className="flex h-full gap-2 items-center justify-center mt-8 ml-2 mr-2">
-          <form className="flex flex-col gap-4 w-[350px] p-6 bg-blue-200 rounded-xl shadow-lg font-sans">
+          <form
+            className="flex flex-col gap-4 w-[350px] p-6 bg-blue-200 rounded-xl shadow-lg font-sans"
+            onSubmit={handleSubmit}
+          >
             <div className="text-2xl mb-2 text-center font-bold">Sign up</div>
+            {error && <div className="text-red-600 text-center">{error}</div>}
+            {success && <div className="text-green-600 text-center">{success}</div>}
             <label className="flex flex-col">
               <span className="mb-1 font-medium">Email</span>
               <input

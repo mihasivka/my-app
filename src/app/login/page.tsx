@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react"; 
+import Cookies from "js-cookie"; // Install with: npm install js-cookie
+
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -18,6 +20,30 @@ export default function Home() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
+    const password = (form.elements.namedItem("password") as HTMLInputElement).value;
+
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+ if (res.ok) {
+      // Option 1: If your API returns a JWT token
+      const data = await res.json();
+      Cookies.set("token", data.token, { expires: 7 }); // 7 days
+      // Optionally redirect or update UI
+      window.location.href = "/home";
+    } else {
+      // Handle error
+      alert("Login failed");
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-400 font-sans">
@@ -98,7 +124,10 @@ export default function Home() {
           Login to your account to get started!
         </div>
         <div className="flex h-full gap-2 items-center justify-center mt-8 ml-2 mr-2">
-          <form className="flex flex-col gap-4 w-[350px] p-6 bg-blue-200 rounded-xl shadow-lg font-sans">
+          <form 
+            className="flex flex-col gap-4 w-[350px] p-6 bg-blue-200 rounded-xl shadow-lg font-sans"
+            onSubmit={handleSubmit}
+            >
             <div className="text-2xl mb-2 text-center font-bold">Log in</div>
             <label className="flex flex-col">
               <span className="mb-1 font-medium">Email</span>

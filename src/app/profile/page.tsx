@@ -8,6 +8,29 @@ export default function Home() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // User state
+  const [user, setUser] = useState<{
+    username: string;
+    email: string;
+    memberSince: string;
+    createdCourses: number;
+    enrolledCourses: number;
+    userScore: number;
+  } | null>(null);
+
+  // Fetch user info on mount
+  useEffect(() => {
+    async function fetchUser() {
+      const res = await fetch('/api/profile', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      }
+    }
+    fetchUser();
+  }, []);
+
+  
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -104,8 +127,12 @@ export default function Home() {
               className="rounded-full border-4 border-blue-300 mb-4"
               priority
             />
-            <div className="text-3xl font-bold text-blue-700 mb-2">Your Name</div>
-            <div className="text-lg text-gray-700 mb-4">your.email@example.com</div>
+            <div className="text-3xl font-bold text-blue-700 mb-2">
+              {user ? user.username : "Loading..."}
+            </div>
+            <div className="text-lg text-gray-700 mb-4">
+              {user ? user.email : ""}
+            </div>
             <button className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
               Edit Profile
             </button>
@@ -115,11 +142,10 @@ export default function Home() {
             <div className="flex-1 bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center">
               <div className="text-2xl font-semibold mb-4 text-blue-700">Profile Information</div>
               <div className="w-full flex flex-col gap-2 text-lg text-blue-900">
-                <div><span className="font-bold">Username:</span> yourusername</div>
-                <div><span className="font-bold">Member since:</span> January 2025</div>
-                <div><span className="font-bold">Courses created:</span> 3</div>
-                <div><span className="font-bold">Courses enrolled:</span> 5</div>
-                <div><span className="font-bold">User score: user_score</span> 5</div>
+                <div><span className="font-bold">Member since:</span> {user ? user.memberSince : ""}</div>
+                <div><span className="font-bold">Courses created:</span> {user ? user.createdCourses : ""}</div>
+                <div><span className="font-bold">Courses enrolled:</span> {user ? user.enrolledCourses : ""}</div>
+                <div><span className="font-bold">User score:</span> {user ? user.userScore : ""}</div>
               </div>
             </div>
             {/* Suggestions */}

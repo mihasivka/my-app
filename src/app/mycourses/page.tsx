@@ -3,10 +3,53 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+
+type Course = {
+  _id: string;
+  title: string;
+  genre: string;
+  description: string;
+  level: string;
+  predictedTime: string;
+};
 
 export default function Home() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const [courses, setCourses] = useState<Course[]>([]);
+
+
+  // Check if user is logged in, if not, redirect to login page
+  useEffect(() => {
+    const token = Cookies.get("token");
+    if (!token) {
+      router.push("/login");
+    }
+  }, [router]);
+
+  // Fetch user's courses
+  useEffect(() => {
+    fetch("/api/mycourses", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => setCourses(Array.isArray(data.courses) ? data.courses : []));
+  }, []);
+
+  // Delete course handler
+  const handleDelete = async (courseId: string) => {
+    if (!confirm("Are you sure you want to delete this course?")) return;
+    const res = await fetch(`/api/deletecourse/${courseId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (res.ok) {
+      setCourses(courses => courses.filter(course => course._id !== courseId));
+    } else {
+      alert("Failed to delete course.");
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -109,13 +152,58 @@ export default function Home() {
             {/* My Courses List */}
             <div className="flex-1 bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center">
               <div className="text-2xl font-semibold mb-4 text-blue-700">Your Courses</div>
-              <div className="w-full flex flex-col gap-4">
-                <div className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900">My Course 1: Web Development</div>
-                <div className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900">My Course 2: Data Science</div>
-                <div className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900">My Course 3: UI/UX Design</div>
-              </div>
+              {courses.length === 0 ? (
+                <div className="text-lg text-gray-700 text-center">
+                  You currently have no courses, to get started click on <span className="font-bold">"Create Course"</span>!
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full text-md font-semibold mb-4 text-blue-700">
+                  {courses.map(course => (
+                    <div
+                      key={course._id}
+                      className="flex flex-col justify-between bg-white rounded-lg shadow p-4 min-h-[250px] max-w-xs w-full"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <Link
+                          href={`/courses/${course._id}`}
+                          className="text-xl font-bold text-blue-700 hover:underline"
+                        >
+                          {course.title}
+                        </Link>
+                        <div className="flex gap-2">
+                          <button
+                            className="text-xs px-2 py-1 bg-green-400 hover:bg-yellow-500 text-white rounded"
+                            // onClick={...} // Edit functionality to be implemented
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="text-xs px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded"
+                            onClick={() => handleDelete(course._id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                      Genre:
+                      <div className="flex mb-2">
+                        <div className="text-sm text-black bg-blue-400 rounded-lg uppercase font-bold">{course.genre}</div>
+                      </div>
+                      Description:
+                      <div className="flex-2 mb-2">
+                        <div className="bg-blue-100 rounded p-2 text-gray-800 text-sm truncate">
+                          {course.description}
+                        </div>
+                      </div>
+                      <div className="flex flex-row justify-between text-xs text-gray-600 mt-2">
+                        <span className="font-semibold">Level:</span> <span>{course.level}</span>
+                        <span className="font-semibold">Length:</span> <span>{course.predictedTime} hrs</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            
           </div>
         </div>
       </main>

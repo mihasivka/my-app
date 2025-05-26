@@ -3,10 +3,23 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  // Restrict access to logged-in users
+  useEffect(() => {
+    const token = Cookies.get("token");
+    if (!token) {
+      router.push("/login");
+    }
+  }, [router]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -18,6 +31,36 @@ export default function Home() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Handle form submit
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    const form = e.currentTarget;
+    const data = {
+      title: (form.elements.namedItem("title") as HTMLInputElement).value,
+      description: (form.elements.namedItem("description") as HTMLInputElement).value,
+      category: (form.elements.namedItem("category") as HTMLSelectElement).value,
+      difficulty: (form.elements.namedItem("difficulty") as RadioNodeList).value,
+      length: (form.elements.namedItem("length") as HTMLSelectElement).value,
+    };
+
+    const res = await fetch("/api/createcourse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
+
+    if (res.ok) {
+      setSuccess("Course created successfully!");
+      form.reset();
+    } else {
+      const result = await res.json();
+      setError(result.error || "Failed to create course.");
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-400">
@@ -99,7 +142,9 @@ export default function Home() {
             Create a New Course
           </div>
           <div className="bg-blue-200 rounded-xl shadow-lg p-8 flex flex-col items-center">
-            <form className="flex flex-col gap-6 w-full max-w-lg font-sans">
+            <form className="flex flex-col gap-6 w-full max-w-lg font-sans" onSubmit={handleSubmit}>
+              {error && <div className="text-red-600 text-center">{error}</div>}
+              {success && <div className="text-green-600 text-center">{success}</div>}
               <label className="flex flex-col">
                 <span className="mb-1 font-medium">Course Title</span>
                 <input
@@ -125,6 +170,7 @@ export default function Home() {
                   className="border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 font-sans"
                   required
                 >
+                  
                   <option value="">Select category</option>
                   <option value="programming">Programming</option>
                   <option value="languages">Languages</option>
@@ -168,7 +214,7 @@ export default function Home() {
               </label>
               <button
                 type="submit"
-                className="bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition font-sans"
+                className="bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition font-sans cursor-pointer"
               >
                 Create Course
               </button>
