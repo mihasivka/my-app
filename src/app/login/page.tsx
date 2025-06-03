@@ -39,6 +39,7 @@ export default function Home() {
       Cookies.set("token", data.token, { expires: 7 }); // 7 days
       // Optionally redirect or update UI
       window.location.href = "/home";
+      console.log("Login successful");
     } else {
       // Handle error
       alert("Login failed");
@@ -93,13 +94,7 @@ export default function Home() {
           </button>
           {open && (
             <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
-              <Link
-                href="/profile"
-                className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
-                onClick={() => setOpen(false)}
-              >
-                Profile
-              </Link>
+              
               <Link
                 href="/login"
                 className="block px-4 py-2 text-gray-800 hover:bg-blue-100"

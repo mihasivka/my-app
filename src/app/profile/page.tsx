@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState, useRef, useEffect } from "react";
+import Cookies from "js-cookie";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -73,46 +74,63 @@ export default function Home() {
             </button>
           </Link>
         </div>
-        <div className="relative mr-3" ref={menuRef}>
-          <button
-            onClick={() => setOpen((prev) => !prev)}
-            className="focus:outline-none"
-            aria-label="Open profile menu"
-          >
-            <Image
-              src="/images/profile_icon.png"
-              alt="Profile"
-              width={40}
-              height={40}
-              className="rounded-full cursor-pointer border border-gray-300 hover:border-blue-600 transition font-bowlby"
-              priority
-            />
-          </button>
-          {open && (
-            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
-              <Link
-                href="/profile"
-                className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
-                onClick={() => setOpen(false)}
-              >
-                Profile
-              </Link>
-              <Link
-                href="/login"
-                className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
-                onClick={() => setOpen(false)}
-              >
-                Login
-              </Link>
-              <Link
-                href="/signup"
-                className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
-                onClick={() => setOpen(false)}
-              >
-                Signup
-              </Link>
+
+        <div className="flex items-center gap-3">
+          {/* Username display in its own div */}
+          {user && (
+            <div className="text-lg font-semibold text-white mr-2">
+              {user.username}
             </div>
           )}
+          {/* Profile icon and dropdown */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setOpen((prev) => !prev)}
+              className="focus:outline-none"
+              aria-label="Open profile menu"
+            >
+              <Image
+                src="/images/profile_icon.png"
+                alt="Profile"
+                width={40}
+                height={40}
+                className="rounded-full cursor-pointer border border-gray-300 hover:border-blue-600 transition font-bowlby"
+                priority
+              />
+            </button>
+            {open && (
+              <div className="absolute -translate-x-27 translate-y-3 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
+                {user ? (
+                  // If logged in, show only Profile
+                  <Link
+                    href="/profile"
+                    className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
+                    onClick={() => setOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                ) : (
+                  // If not logged in, show Login and Signup
+                  <>
+                    <Link
+                      href="/login"
+                      className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
+                      onClick={() => setOpen(false)}
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/signup"
+                      className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
+                      onClick={() => setOpen(false)}
+                    >
+                      Signup
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -135,6 +153,16 @@ export default function Home() {
             </div>
             <button className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
               Edit Profile
+            </button>
+            <button
+              className="px-6 py-2 mt-4 bg-red-500 text-white rounded hover:bg-red-600 transition"
+              onClick={async () => {
+                await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+                Cookies.remove("token"); // Remove token from browser
+                window.location.href = '/login';
+              }}
+            >
+              Logout
             </button>
           </div>
           <div className="flex flex-row gap-8">

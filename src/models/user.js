@@ -47,5 +47,5 @@ userSchema.virtual('userScore').get(function () {
 userSchema.set('toJSON', { virtuals: true });
 userSchema.set('toObject', { virtuals: true });
 
-const User = mongoose.models.User || mongoose.model('User', userSchema);
-export default User;
+
+export default mongoose.models.User || mongoose.model('User', userSchema);;

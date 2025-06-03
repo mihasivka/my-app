@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { connect } from '@/dbConfig/db';
-import User from '@/app/models/user';
-import Course from '@/app/models/course';
+import Course from '@/models/course';
+import User from '@/models/user';
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   await connect();

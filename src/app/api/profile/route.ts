@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { connect } from '@/dbConfig/db';
-import User from '@/app/models/user';
-import Course from '@/app/models/course'; // Make sure you have this model
+import Course from '@/models/course';
+import User from '@/models/user';
 
 export async function GET(req: NextRequest) {
   await connect();
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
     const memberSince = user.createdAt ? user.createdAt.toISOString().split('T')[0] : '';
     const createdCourses = user.createdCourses?.length || 0;
-    const enrolledCourses = user.enrolledCourses?.length || 0;
+    const enrolledCourses = user.enrolledCourses;
 
     return NextResponse.json({
       userId: user._id,

@@ -100,13 +100,7 @@ export default function Home() {
           </button>
           {open && (
             <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
-              <Link
-                href="/profile"
-                className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
-                onClick={() => setOpen(false)}
-              >
-                Profile
-              </Link>
+              
               <Link
                 href="/login"
                 className="block px-4 py-2 text-gray-800 hover:bg-blue-100"

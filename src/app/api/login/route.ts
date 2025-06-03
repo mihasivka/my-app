@@ -1,5 +1,5 @@
 import { connect } from '@/dbConfig/db';
-import User from '@/app/models/user';
+import User from '@/models/user';
 import jwt from 'jsonwebtoken';
 import { NextResponse } from 'next/server';
 
