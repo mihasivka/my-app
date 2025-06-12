@@ -108,11 +108,24 @@ export default function CoursePage() {
       });
       if (res.ok) {
         alert("Enrolled successfully!");
+        router.refresh(); // Force the page components to re-fetch data and update the view.
       } else {
         alert("Failed to enroll.");
       }
     };
 
+    const handleUnenroll = async () => {
+  const res = await fetch(`/api/unenroll/${course._id}`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (res.ok) {
+    alert("Unenrolled successfully!");
+    router.refresh(); // refresh to update the UI
+  } else {
+    alert("Failed to unenroll.");
+  }
+};
   
 
   return (
@@ -226,12 +239,20 @@ export default function CoursePage() {
                   </button>
                 </div>
               ) : isEnrolled ? (
-                <Link
-                  href={`/courses/${course._id}/rate`}
-                  className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded cursor-pointer"
-                >
-                  Rate
-                </Link>
+                <div className="flex gap-2">
+                  <Link
+                    href={`/courses/${course._id}/rate`}
+                    className="px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded cursor-pointer"
+                  >
+                    Rate
+                  </Link>
+                  <button
+                    className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded cursor-pointer"
+                    onClick={handleUnenroll}
+                  >
+                    Unenroll
+                  </button>
+                </div>
               ) : (
                 <button
                   className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded cursor-pointer"

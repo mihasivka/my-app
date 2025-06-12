@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     genre: course.genre,
     level: course.level,
     predictedTime: course.predictedTime,
+    courseScore: course.courseScore,
     creator: course.creator?.username || "Unknown",
   }));
 

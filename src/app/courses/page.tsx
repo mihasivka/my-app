@@ -28,6 +28,7 @@ export default function Home() {
       genre?: string;
       level?: string;
       predictedTime?: number;
+      courseScore?: number;
     }[]
   >([]);
 
@@ -175,18 +176,10 @@ export default function Home() {
                   <button className="flex-1 bg-blue-500 text-white rounded px-3 py-2 hover:bg-blue-600 transition">Sort</button>
                 </div>
               </div>
-              {/* Top Courses */}
-              <div className="bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center">
-                <div className="text-2xl font-semibold mb-2 text-blue-700">Top Courses</div>
-                <div className="w-full flex flex-col gap-4">
-                  <div className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900">Course 1: Introduction to IS</div>
-                  <div className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900">Course 2: Advanced Sharing</div>
-                  <div className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900">Course 3: Collaboration Tools</div>
-                </div>
-              </div>
+              
               {/* All Courses List */}
-              <div className="bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center mt-6">
-                <div className="text-2xl font-semibold mb-2 text-blue-700">All Courses</div>
+              <div className="bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center">
+                <div className="text-2xl font-semibold mb-2 text-blue-700">Courses</div>
                 {courses.length === 0 ? (
                   <div className="text-blue-900">No courses found.</div>
                 ) : (
@@ -222,6 +215,15 @@ export default function Home() {
                           <div className="bg-blue-100 rounded p-2 text-gray-800 text-sm truncate">
                             {course.description}
                           </div>
+                        </div>
+                        {/* New Rating Display */}
+                        <div className="mt-2 text-sm text-gray-700">
+                          <span className="font-semibold">Rating:</span>{" "}
+                          <span>
+                            {course.courseScore !== undefined && course.courseScore !== null
+                              ? course.courseScore.toFixed(1)
+                              : "N/A"}
+                          </span>
                         </div>
                         <div className="flex flex-row justify-between text-xs text-gray-600 mt-2">
                           <span className="font-semibold">Level:</span> <span>{course.level}</span>

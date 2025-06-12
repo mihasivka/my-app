@@ -27,11 +27,24 @@ const courseSchema = new mongoose.Schema({
   },
   creator: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User' 
+    ref: 'User', 
+    required: true 
   },
-});
+  ratings: [
+    {
+      rater: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User' 
+      },
+      score: { 
+        type: Number, 
+        min: 1, 
+        max: 5 
+      }
+    }
+  ]
+}, { timestamps: true });
 
-
-const Course = mongoose.models.Course || mongoose.model('Course', courseSchema);;
+const Course = mongoose.models.Course || mongoose.model('Course', courseSchema);
 export default Course;
 

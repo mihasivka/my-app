@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import Image from "next/image";
 import Link from "next/link";
@@ -14,7 +14,16 @@ type Course = {
   predictedTime: string;
 };
 
-// User state
+export default function EditCoursePage() {
+  // All hooks inside the component function
+  const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  
+  const [course, setCourse] = useState<Course | null>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<{
     username: string;
     email: string;
@@ -24,53 +33,42 @@ type Course = {
     userScore: number;
   } | null>(null);
 
-  export default function EditCoursePage() {
-    const { id } = useParams<{ id: string }>();
-    const router = useRouter();
-    const [course, setCourse] = useState<Course | null>(null);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
-    const [open, setOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    fetch(`/api/courses/${id}`, { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => setCourse(data.course));
+  }, [id]);
 
-    useEffect(() => {
-      fetch(`/api/courses/${id}`, { credentials: "include" })
-        .then(res => res.json())
-        .then(data => setCourse(data.course));
-    }, [id]);
-  
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      setError("");
-      setSuccess("");
-      if (!course) return;
-  
-      const form = e.currentTarget;
-      const data = {
-        title: (form.elements.namedItem("title") as HTMLInputElement).value,
-        description: (form.elements.namedItem("description") as HTMLInputElement).value,
-        category: (form.elements.namedItem("category") as HTMLSelectElement).value,
-        difficulty: (form.elements.namedItem("difficulty") as RadioNodeList).value,
-        length: (form.elements.namedItem("length") as HTMLSelectElement).value,
-      };
-  
-      const res = await fetch(`/api/courses/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "include",
-      });
-  
-      if (res.ok) {
-        setSuccess("Course updated successfully!");
-        router.push(`/courses/${id}`);
-      } else {
-        const result = await res.json();
-        setError(result.error || "Failed to update course.");
-      }
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    if (!course) return;
+
+    const form = e.currentTarget;
+    const data = {
+      title: (form.elements.namedItem("title") as HTMLInputElement).value,
+      description: (form.elements.namedItem("description") as HTMLInputElement).value,
+      category: (form.elements.namedItem("category") as HTMLSelectElement).value,
+      difficulty: (form.elements.namedItem("difficulty") as RadioNodeList).value,
+      length: (form.elements.namedItem("length") as HTMLSelectElement).value,
     };
-  
-    
+
+    const res = await fetch(`/api/courses/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
+
+    if (res.ok) {
+      setSuccess("Course updated successfully!");
+      router.push(`/courses/${id}`);
+    } else {
+      const result = await res.json();
+      setError(result.error || "Failed to update course.");
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {

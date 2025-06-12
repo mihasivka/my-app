@@ -14,6 +14,7 @@ type Course = {
   level: string;
   predictedTime: string;
   creator: string;
+  courseScore?: number;
 };
 
 
@@ -32,6 +33,7 @@ export default function Home() {
     createdCourses: number;
     enrolledCourses: number;
     userScore: number;
+    courseScore?: number;
   } | null>(null);
 
   useEffect(() => {
@@ -217,11 +219,11 @@ export default function Home() {
                         </Link>
                         <div className="flex gap-2">
                           <button
-                            className="text-xs px-2 py-1 bg-green-400 hover:bg-yellow-500 text-white rounded"
-                            // onClick={...} // Edit functionality to be implemented
-                          >
-                            Edit
-                          </button>
+                          className="px-3 py-1 bg-green-400 hover:bg-green-500 text-white rounded cursor-pointer"
+                          onClick={() => router.push(`/courses/${course._id}/edit`)}
+                        >
+                          Edit
+                        </button>
                           <button
                             className="text-xs px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded"
                             onClick={() => handleDelete(course._id)}
@@ -240,6 +242,14 @@ export default function Home() {
                           {course.description}
                         </div>
                       </div>
+                      <div className="mt-2 text-sm text-gray-700">
+                          <span className="font-semibold">Rating:</span>{" "}
+                          <span>
+                            {course.courseScore !== undefined && course.courseScore !== null
+                              ? course.courseScore.toFixed(1)
+                              : "N/A"}
+                          </span>
+                        </div>
                       <div className="flex flex-row justify-between text-xs text-gray-600 mt-2">
                         <span className="font-semibold">Level:</span> <span>{course.level}</span>
                         <span className="font-semibold">Length:</span> <span>{course.predictedTime} hrs</span>
@@ -292,6 +302,14 @@ export default function Home() {
                           {course.description}
                         </div>
                       </div>
+                      <div className="mt-2 text-sm text-gray-700">
+                          <span className="font-semibold">Rating:</span>{" "}
+                          <span>
+                            {course.courseScore !== undefined && course.courseScore !== null
+                              ? course.courseScore.toFixed(1)
+                              : "N/A"}
+                          </span>
+                        </div>
                       <div className="flex flex-row justify-between text-xs text-gray-600 mt-2">
                         <span className="font-semibold">Level:</span> <span>{course.level}</span>
                         <span className="font-semibold">Length:</span> <span>{course.predictedTime} hrs</span>

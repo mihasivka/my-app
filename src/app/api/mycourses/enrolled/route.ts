@@ -18,27 +18,31 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ courses: [] }, { status: 200 });
   }
 
-  // Find user and populate enrolledCourses
-  const user = await User.findById(decoded.userId)
-    .populate({
-      path: 'enrolledCourses',
-      populate: { path: 'creator', select: 'username' }
-    });
-
-  if (!user) {
+  // Get the user so we know which courses they are enrolled in.
+  const user = await User.findById(decoded.userId);
+  if (!user || !user.enrolledCourses) {
     return NextResponse.json({ courses: [] }, { status: 200 });
   }
 
-  // Format courses to include creator's username
-  const formatted = user.enrolledCourses.map((course: any) => ({
+  // Find courses that the user is enrolled in, selecting courseScore and other needed fields.
+  const enrolledCourses = await Course.find({
+    _id: { $in: user.enrolledCourses },
+  }).select('title description genre level predictedTime courseScore creator')
+    .populate({ path: 'creator', select: 'username' });
+
+  const formattedCourses = enrolledCourses.map((course: any) => ({
     _id: course._id,
     title: course.title,
     description: course.description,
     genre: course.genre,
     level: course.level,
     predictedTime: course.predictedTime,
+    // If courseScore is available use it; otherwise default to 0.
+    courseScore: course.courseScore !== undefined && course.courseScore !== null
+      ? course.courseScore
+      : 0,
     creator: course.creator?.username || "Unknown",
   }));
 
-  return NextResponse.json({ courses: formatted }, { status: 200 });
+  return NextResponse.json({ courses: formattedCourses }, { status: 200 });
 }
