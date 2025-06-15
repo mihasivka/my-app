@@ -5,15 +5,24 @@ import Link from "next/link";
 import React, { useState, useRef, useEffect } from "react";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
-import { connect } from "@/dbConfig/db";
 
+type TopCourse = {
+  _id: string;
+  title: string;
+  courseScore?: number;
+};
 
+type TopUser = {
+  _id: string;
+  username: string;
+  userScore?: number;
+};
 
 export default function Home() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-// User state
+  // User state
   const [user, setUser] = useState<{
     username: string;
     email: string;
@@ -21,19 +30,33 @@ export default function Home() {
     createdCourses: number;
     enrolledCourses: number;
     userScore: number;
+    role?: string;
   } | null>(null);
 
-  
+  // Top courses and users
+  const [topCourses, setTopCourses] = useState<TopCourse[]>([]);
+  const [topUsers, setTopUsers] = useState<TopUser[]>([]);
+
   useEffect(() => {
-  async function fetchUser() {
-    const res = await fetch('/api/profile', { credentials: 'include' });
-    if (res.ok) {
-      const data = await res.json();
-      setUser(data);
+    async function fetchUser() {
+      const res = await fetch('/api/profile', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      }
     }
-  }
-  fetchUser();
-}, []);
+    fetchUser();
+
+    async function fetchHomeData() {
+      const res = await fetch('/api/home');
+      if (res.ok) {
+        const data = await res.json();
+        setTopCourses(data.topCourses || []);
+        setTopUsers(data.topUsers || []);
+      }
+    }
+    fetchHomeData();
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -52,19 +75,19 @@ export default function Home() {
         <div className="flex flex-row gap-4 divide-gray-500">
           <Link href="/home">
             <button
-            onClick={() => setOpen((prev) => !prev)}
-            className="focus:outline-none"
-            aria-label="Open profile menu"
-          >
-            <Image
-              src="/images/logo1.png"
-              alt="Profile"
-              width={150}
-              height={150}
-              className="rounded-full cursor-pointer transition"
-              priority
-            />
-          </button>
+              onClick={() => setOpen((prev) => !prev)}
+              className="focus:outline-none"
+              aria-label="Open profile menu"
+            >
+              <Image
+                src="/images/logo1.png"
+                alt="Profile"
+                width={150}
+                height={150}
+                className="rounded-full cursor-pointer transition"
+                priority
+              />
+            </button>
           </Link>
           <Link href="/courses">
             <button className="text-2xl h-15 font-bold text-black px-4 focus:outline-none bg-transparent hover:bg-blue-300 rounded cursor-pointer">
@@ -76,6 +99,13 @@ export default function Home() {
               My Courses
             </button>
           </Link>
+          {user && (user.role === "moderator" || user.role === "admin") && (
+            <Link href="/approvals">
+              <button className="text-2xl h-15 font-bold text-white px-4 focus:outline-none bg-green-600 hover:bg-green-700 rounded cursor-pointer">
+                Approvals
+              </button>
+            </Link>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {/* Username display in its own div */}
@@ -154,18 +184,48 @@ export default function Home() {
           <div className="flex-[1.5] bg-blue-200 rounded-xl shadow-lg  p-6 flex flex-col items-center">
             <div className="text-2xl font-semibold mb-2 text-blue-700">Top Courses</div>
             <div className="w-full flex flex-col gap-4">
-              <div className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900">Course 1: Introduction to IS</div>
-              <div className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900">Course 2: Advanced Chinese</div>
-              <div className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900">Course 3: How to </div>
+              {topCourses.length === 0 ? (
+                <div className="text-blue-900">No top courses found.</div>
+              ) : (
+                topCourses.map(course => (
+                  <Link
+                    key={course._id}
+                    href={`/courses/${course._id}`}
+                    className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900 hover:underline flex justify-between items-center"
+                  >
+                    <span>{course.title}</span>
+                    <span className="ml-4 text-sm text-blue-700 font-bold">
+                      {course.courseScore !== undefined && course.courseScore !== null
+                        ? `⭐ ${course.courseScore.toFixed(1)}`
+                        : "No rating"}
+                    </span>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
           {/* Top Users */}
           <div className="flex-1 bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center">
             <div className="text-2xl font-semibold mb-2 text-blue-700">Top Users</div>
             <div className="w-full flex flex-col gap-4">
-              <div className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900">Alice</div>
-              <div className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900">Bob</div>
-              <div className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900">Charlie</div>
+              {topUsers.length === 0 ? (
+                <div className="text-blue-900">No top users found.</div>
+              ) : (
+                topUsers.map(user => (
+                  <Link
+                    key={user._id}
+                    href={`/profile/${user.username}`}
+                    className="bg-blue-100 rounded p-4 shadow text-lg font-medium text-blue-900 hover:underline flex justify-between items-center"
+                  >
+                    <span>{user.username}</span>
+                    <span className="ml-4 text-sm text-blue-700 font-bold">
+                      {user.userScore !== undefined && user.userScore !== null
+                        ? `🏆 ${user.userScore.toFixed(1)}`
+                        : "No score"}
+                    </span>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
         </div>

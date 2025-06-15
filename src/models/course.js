@@ -42,7 +42,8 @@ const courseSchema = new mongoose.Schema({
         max: 5 
       }
     }
-  ]
+  ],
+  approved: { type: String, enum: ['pending', 'approved', 'denied'], default: 'pending' }
 }, { timestamps: true });
 
 const Course = mongoose.models.Course || mongoose.model('Course', courseSchema);

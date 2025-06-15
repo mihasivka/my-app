@@ -215,6 +215,11 @@ export default function Home() {
                   <option value="math">Math</option>
                   <option value="art">Art</option>
                   <option value="business">Business</option>
+                  <option value="culinary">Culinary</option>
+                  <option value="gaming">Gaming</option>
+                  <option value="sport">Sport</option>
+                  <option value="music">Music</option>
+                  <option value="dance">Dance</option>
                   <option value="other">Other</option>
                 </select>
               </label>

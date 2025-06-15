@@ -52,6 +52,7 @@ export default function EditCoursePage() {
       category: (form.elements.namedItem("category") as HTMLSelectElement).value,
       difficulty: (form.elements.namedItem("difficulty") as RadioNodeList).value,
       length: (form.elements.namedItem("length") as HTMLSelectElement).value,
+      approved: "pending",
     };
 
     const res = await fetch(`/api/courses/${id}`, {
@@ -208,13 +209,18 @@ export default function EditCoursePage() {
               required
             >
               <option value="">Select category</option>
-              <option value="programming">Programming</option>
-              <option value="languages">Languages</option>
-              <option value="science">Science</option>
-              <option value="math">Math</option>
-              <option value="art">Art</option>
-              <option value="business">Business</option>
-              <option value="other">Other</option>
+                  <option value="programming">Programming</option>
+                  <option value="languages">Languages</option>
+                  <option value="science">Science</option>
+                  <option value="math">Math</option>
+                  <option value="art">Art</option>
+                  <option value="business">Business</option>
+                  <option value="culinary">Culinary</option>
+                  <option value="gaming">Gaming</option>
+                  <option value="sport">Sport</option>
+                  <option value="music">Music</option>
+                  <option value="dance">Dance</option>
+                  <option value="other">Other</option>
             </select>
           </label>
           <label className="flex flex-col">

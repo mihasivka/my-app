@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     predictedTime: course.predictedTime,
     courseScore: course.courseScore,
     creator: course.creator?.username || "Unknown",
+    approved: course.approved,
   }));
 
   return NextResponse.json({ courses: formatted }, { status: 200 });

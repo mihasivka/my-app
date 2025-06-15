@@ -13,6 +13,8 @@ type Course = {
   level: string;
   predictedTime: string;
   creator: string;
+  courseScore?: number | null;
+  approved?: boolean;
 };
 
 export default function CoursePage() {
@@ -21,18 +23,20 @@ export default function CoursePage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [user, setUser] = useState<{
-  username: string;
-  email: string;
-  memberSince: string;
-  createdCourses: number;
-  enrolledCourses: Array<string | { _id: string }>; // ✅ Now it's an array!
-  userScore: number;
-} | null>(null);
+    username: string;
+    email: string;
+    memberSince: string;
+    createdCourses: number;
+    enrolledCourses: Array<string | { _id: string }>;
+
+    userScore: number;
+    role?: string;
+  } | null>(null);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  
-// Close dropdown when clicking outside
+
+  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -44,89 +48,111 @@ export default function CoursePage() {
   }, []);
 
   useEffect(() => {
-  async function fetchUser() {
-    const res = await fetch('/api/profile', { credentials: 'include' });
-    if (res.ok) {
-      const data = await res.json();
-      setUser(data);
+    async function fetchUser() {
+      const res = await fetch('/api/profile', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      }
     }
-  }
-  fetchUser();
-}, []);
+    fetchUser();
+  }, []);
 
   // Fetch course data
-    useEffect(() => {
-      fetch(`/api/courses/${id}`, { credentials: "include" })
-        .then(res => res.json())
-        .then(data => setCourse(data.course));
-    }, [id]);
-  
-    // Fetch logged-in user ID (from a profile API or decode JWT)
-    useEffect(() => {
-      fetch("/api/profile", { credentials: "include" })
-        .then(res => res.json())
-        .then(data => setUserId(data.userId)); // Ensure your /api/profile returns userId
-    }, []);
-  
-    if (!course) return <div>Loading...</div>;
-  
-    const isOwner = userId && course.creator === userId;
+  useEffect(() => {
+    fetch(`/api/courses/${id}`, { credentials: "include" })
+      .then(res => res.json())
+      .then(data => setCourse(data.course));
+  }, [id]);
 
-    // Add this helper to check enrollment
-    const isEnrolled =
-      user &&
-      Array.isArray(user.enrolledCourses) &&
-      user.enrolledCourses
-        .map((c: any) => (typeof c === "string" ? c : c._id))
-        .includes(course._id);
+  // Fetch logged-in user ID (from a profile API or decode JWT)
+  useEffect(() => {
+    fetch("/api/profile", { credentials: "include" })
+      .then(res => res.json())
+      .then(data => setUserId(data.userId));
+  }, []);
 
-    // Add this log to check enrolled course IDs and the current course ID
-    console.log(
-      "Enrolled course IDs:",
-      user?.enrolledCourses?.map((c: any) => (typeof c === "string" ? c : c._id)),
-      "Current course ID:",
-      course._id
-    );
-  
-    const handleDelete = async () => {
-      if (!confirm("Are you sure you want to delete this course?")) return;
-      const res = await fetch(`/api/deletecourse/${course._id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (res.ok) {
-        router.push("/mycourses");
-      } else {
-        alert("Failed to delete course.");
-      }
-    };
-  
-    const handleEnroll = async () => {
-      const res = await fetch(`/api/enroll/${course._id}`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (res.ok) {
-        alert("Enrolled successfully!");
-        router.refresh(); // Force the page components to re-fetch data and update the view.
-      } else {
-        alert("Failed to enroll.");
-      }
-    };
+  if (!course) return <div>Loading...</div>;
 
-    const handleUnenroll = async () => {
-  const res = await fetch(`/api/unenroll/${course._id}`, {
-    method: "POST",
+  const isOwner = userId && course.creator === userId;
+  const isModerator = user && user.role === "moderator";
+
+  // Check enrollment
+  const enrolledCourseIds = Array.isArray(user?.enrolledCourses)
+    ? user.enrolledCourses.map((c: any) => (typeof c === "string" ? c : c._id))
+    : [];
+  const isEnrolled = enrolledCourseIds.includes(course._id);
+
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this course?")) return;
+    const res = await fetch(`/api/deletecourse/${course._id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (res.ok) {
+      router.push("/mycourses");
+    } else {
+      alert("Failed to delete course.");
+    }
+  };
+
+  const handleEnroll = async () => {
+    const res = await fetch(`/api/enroll/${course._id}`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (res.ok) {
+      alert("Enrolled successfully!");
+      router.refresh();
+      window.location.reload();
+    } else {
+      alert("Failed to enroll.");
+    }
+  };
+
+  const handleUnenroll = async () => {
+    const res = await fetch(`/api/unenroll/${course._id}`, {
+      method: "POST",
+      credentials: "include",
+    });
+    if (res.ok) {
+      alert("Unenrolled successfully!");
+      router.refresh();
+    } else {
+      alert("Failed to unenroll.");
+    }
+  };
+
+  // Moderator approve/deny handlers
+  const handleApprove = async () => {
+  const res = await fetch(`/api/courses/${course._id}/approve`, {
+    method: "PUT",
     credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ approved: "approved" }),
   });
   if (res.ok) {
-    alert("Unenrolled successfully!");
-    router.refresh(); // refresh to update the UI
+    alert("Course approved!");
+    router.push("/approvals"); // Redirect to approvals page
   } else {
-    alert("Failed to unenroll.");
+    alert("Failed to approve course.");
   }
 };
-  
+
+const handleDeny = async () => {
+  const res = await fetch(`/api/courses/${course._id}/approve`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ approved: "denied" }),
+  });
+  if (res.ok) {
+    alert("Course denied!");
+    router.push("/approvals"); // Redirect to approvals page
+  } else {
+    alert("Failed to deny course.");
+  }
+};
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-400">
@@ -134,19 +160,19 @@ export default function CoursePage() {
         <div className="flex flex-row gap-4 divide-gray-500">
           <Link href="/home">
             <button
-            onClick={() => setOpen((prev) => !prev)}
-            className="focus:outline-none"
-            aria-label="Open profile menu"
-          >
-            <Image
-              src="/images/logo1.png"
-              alt="Profile"
-              width={150}
-              height={150}
-              className="rounded-full cursor-pointer transition"
-              priority
-            />
-          </button>
+              onClick={() => setOpen((prev) => !prev)}
+              className="focus:outline-none"
+              aria-label="Open profile menu"
+            >
+              <Image
+                src="/images/logo1.png"
+                alt="Profile"
+                width={150}
+                height={150}
+                className="rounded-full cursor-pointer transition"
+                priority
+              />
+            </button>
           </Link>
           <Link href="/courses">
             <button className="text-2xl h-15 font-bold text-black px-4 focus:outline-none bg-transparent hover:bg-blue-300 rounded cursor-pointer">
@@ -160,13 +186,11 @@ export default function CoursePage() {
           </Link>
         </div>
         <div className="flex items-center gap-3">
-          {/* Username display in its own div */}
           {user && (
             <div className="text-lg font-semibold text-white mr-2">
               {user.username}
             </div>
           )}
-          {/* Profile icon and dropdown */}
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setOpen((prev) => !prev)}
@@ -185,7 +209,6 @@ export default function CoursePage() {
             {open && (
               <div className="absolute -translate-x-27 translate-y-3 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
                 {user ? (
-                  // If logged in, show only Profile
                   <Link
                     href="/profile"
                     className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
@@ -194,7 +217,6 @@ export default function CoursePage() {
                     Profile
                   </Link>
                 ) : (
-                  // If not logged in, show Login and Signup
                   <>
                     <Link
                       href="/login"
@@ -223,7 +245,28 @@ export default function CoursePage() {
           <div className="w-full max-w-2xl bg-white rounded-xl shadow-lg p-8 mt-10 text-md font-semibold mb-4 text-blue-700">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-3xl font-bold text-blue-700">{course.title}</h1>
-              {isOwner ? (
+              {isModerator ? (
+                <div className="flex gap-2">
+                  <button
+                    className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded cursor-pointer"
+                    onClick={handleApprove}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded cursor-pointer"
+                    onClick={handleDeny}
+                  >
+                    Deny
+                  </button>
+                  <button
+                    className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded cursor-pointer"
+                    onClick={handleDelete}
+                  >
+                    Delete
+                  </button>
+                </div>
+              ) : isOwner ? (
                 <div className="flex gap-2">
                   <button
                     className="px-3 py-1 bg-green-400 hover:bg-green-500 text-white rounded cursor-pointer"
@@ -256,7 +299,7 @@ export default function CoursePage() {
               ) : (
                 <button
                   className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded cursor-pointer"
-                  disabled={!userId} // Disable if user is not logged in
+                  disabled={!userId}
                   onClick={handleEnroll}
                 >
                   Enroll
@@ -264,15 +307,23 @@ export default function CoursePage() {
               )}
             </div>
             Genre:
-              <div className="flex mb-2">
-                <div className="text-sm text-black bg-blue-400 rounded-lg uppercase font-bold">{course.genre}</div>
+            <div className="flex mb-2">
+              <div className="text-sm text-black bg-blue-400 rounded-lg uppercase font-bold">{course.genre}</div>
+            </div>
+            Description:
+            <div className="flex-2 mb-2">
+              <div className="bg-blue-100 rounded p-2 text-gray-800 text-sm truncate">
+                {course.description}
               </div>
-                Description:
-              <div className="flex-2 mb-2">
-                <div className="bg-blue-100 rounded p-2 text-gray-800 text-sm truncate">
-                  {course.description}
-                </div>
-              </div>
+            </div>
+            <div className="mt-2 text-sm text-gray-700">
+              <span className="font-semibold">Rating:</span>{" "}
+              <span>
+                {course.courseScore !== undefined && course.courseScore !== null
+                  ? course.courseScore.toFixed(1)
+                  : "N/A"}
+              </span>
+            </div>
             <div className="flex flex-row justify-between text-xs text-gray-600 mt-2">
               <span className="font-semibold">Level:</span> <span>{course.level}</span>
               <span className="font-semibold">Length:</span> <span>{course.predictedTime} hrs</span>

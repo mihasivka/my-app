@@ -1,33 +1,42 @@
 'use client';
 
 import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-
-type Course = {
-  _id: string;
-  title: string;
-  description: string;
-  genre?: string;
-  level?: string;
-  predictedTime?: number;
-};
-
-type User = {
-  username: string;
-  memberSince?: string;
-  userScore?: number;
-  createdCourses: Course[];
-};
 
 export default function PublicProfile() {
   const params = useParams();
   const userId = params?.id as string;
-  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  // User state
+  const [user, setUser] = useState<{
+    username: string;
+    email?: string;
+    memberSince: string;
+    createdCourses: {
+      _id: string;
+      title: string;
+      description: string;
+      creator: string;
+      genre?: string;
+      level?: string;
+      predictedTime?: number;
+      courseScore?: number;
+    }[];
+    enrolledCourses?: number;
+    userScore?: number;
+  } | null>(null);
+
+  // Logged-in user state
+  const [currentUser, setCurrentUser] = useState<{
+    username: string;
+    role?: string;
+  } | null>(null);
 
   useEffect(() => {
     async function fetchUser() {
@@ -41,6 +50,18 @@ export default function PublicProfile() {
     if (userId) fetchUser();
   }, [userId]);
 
+  // Fetch logged-in user for moderator check
+  useEffect(() => {
+    async function fetchCurrentUser() {
+      const res = await fetch("/api/profile", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentUser(data);
+      }
+    }
+    fetchCurrentUser();
+  }, []);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -51,6 +72,21 @@ export default function PublicProfile() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Delete user and all their courses (moderator only)
+  const handleDeleteUser = async () => {
+    if (!confirm("Are you sure you want to delete this user and all their courses?")) return;
+    const res = await fetch(`/api/users/${userId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (res.ok) {
+      alert("User and all their courses deleted.");
+      router.push("/courses");
+    } else {
+      alert("Failed to delete user.");
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-400">
@@ -84,6 +120,12 @@ export default function PublicProfile() {
           </Link>
         </div>
         <div className="flex items-center gap-3">
+          {/* Username display */}
+          {currentUser && (
+            <div className="text-lg font-semibold text-white mr-2">
+              {currentUser.username}
+            </div>
+          )}
           {/* Profile icon and dropdown */}
           <div className="relative" ref={menuRef}>
             <button
@@ -102,20 +144,32 @@ export default function PublicProfile() {
             </button>
             {open && (
               <div className="absolute -translate-x-27 translate-y-3 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
-                <Link
-                  href="/login"
-                  className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
-                  onClick={() => setOpen(false)}
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/signup"
-                  className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
-                  onClick={() => setOpen(false)}
-                >
-                  Signup
-                </Link>
+                {user ? (
+                  <Link
+                    href="/profile"
+                    className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
+                    onClick={() => setOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
+                      onClick={() => setOpen(false)}
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      href="/signup"
+                      className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
+                      onClick={() => setOpen(false)}
+                    >
+                      Signup
+                    </Link>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -124,14 +178,14 @@ export default function PublicProfile() {
 
       {/* Main */}
       <main className="flex-1 flex flex-col items-center text-black">
-        <div className="w-[70%] mx-auto mt-8">
+        <div className="w-[70%] mx-auto mt-8 items-center flex flex-col items-center">
           {loading ? (
             <div className="text-center text-lg text-blue-900">Loading...</div>
           ) : !user ? (
             <div className="text-center text-lg text-red-600">User not found.</div>
           ) : (
             <>
-              <div className="flex flex-col items-center mb-8">
+              <div className=" w-[30%] bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center mb-8">
                 <Image
                   src="/images/profile_icon.png"
                   alt="Profile"
@@ -153,8 +207,17 @@ export default function PublicProfile() {
                     User Score: {user.userScore}
                   </div>
                 )}
+                {/* Moderator Delete Button */}
+                {currentUser && (currentUser.role === "moderator" || currentUser.role === "admin") && (
+                  <button
+                    className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded cursor-pointer transition"
+                    onClick={handleDeleteUser}
+                  >
+                    Delete User & All Courses
+                  </button>
+                )}
               </div>
-              <div className="bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center mt-6">
+              <div className=" w-[70%] bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center mt-6">
                 <div className="text-2xl font-semibold mb-2 text-blue-700">
                   Courses by {user.username}
                 </div>
@@ -173,11 +236,19 @@ export default function PublicProfile() {
                         >
                           {course.title}
                         </Link>
-                        <div className="text-sm text-black bg-blue-400 rounded-lg uppercase font-bold mb-2">
+                        <div className="text-sm text-black bg-blue-400 rounded-lg uppercase font-bold mb-2 ">
                           {course.genre}
                         </div>
                         <div className="bg-blue-100 rounded p-2 text-gray-800 text-sm truncate mb-2">
                           {course.description}
+                        </div>
+                        <div className="mt-2 text-sm text-gray-700">
+                          <span className="font-semibold">Rating:</span>{" "}
+                          <span>
+                            {course.courseScore !== undefined && course.courseScore !== null
+                              ? course.courseScore.toFixed(1)
+                              : "N/A"}
+                          </span>
                         </div>
                         <div className="flex flex-row justify-between text-xs text-gray-600 mt-2">
                           <span className="font-semibold">Level:</span> <span>{course.level}</span>

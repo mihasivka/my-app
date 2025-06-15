@@ -33,6 +33,7 @@ const userSchema = new mongoose.Schema({
       score: { type: Number, min: 1, max: 5 }
     }
   ],
+  role: { type: String, enum: ['user', 'moderator', 'admin'], default: 'user' }
 }, {
   timestamps: true
 });

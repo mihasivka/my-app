@@ -15,8 +15,8 @@ type Course = {
   predictedTime: string;
   creator: string;
   courseScore?: number;
+  approved?: string;
 };
-
 
 export default function Home() {
   const [open, setOpen] = useState(false);
@@ -25,7 +25,7 @@ export default function Home() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [enrolledCourses, setEnrolledCourses] = useState<Course[]>([]);
 
-// User state
+  // User state
   const [user, setUser] = useState<{
     username: string;
     email: string;
@@ -37,15 +37,15 @@ export default function Home() {
   } | null>(null);
 
   useEffect(() => {
-  async function fetchUser() {
-    const res = await fetch('/api/profile', { credentials: 'include' });
-    if (res.ok) {
-      const data = await res.json();
-      setUser(data);
+    async function fetchUser() {
+      const res = await fetch('/api/profile', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      }
     }
-  }
-  fetchUser();
-}, []);
+    fetchUser();
+  }, []);
 
   // Check if user is logged in, if not, redirect to login page
   useEffect(() => {
@@ -92,6 +92,12 @@ export default function Home() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Filter for approved, pending, and denied courses
+  const approvedCourses = courses.filter(course => course.approved === "approved");
+  const submittedCourses = courses.filter(
+    course => course.approved === "pending" || course.approved === "denied"
+  );
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-400">
@@ -196,16 +202,16 @@ export default function Home() {
             </Link>
           </div>
           <div className="flex flex-row gap-8">
-            {/* My Courses List */}
+            {/* Approved Courses List */}
             <div className="flex-1 bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center">
               <div className="text-2xl font-semibold mb-4 text-blue-700">Your Courses</div>
-              {courses.length === 0 ? (
+              {approvedCourses.length === 0 ? (
                 <div className="text-lg text-gray-700 text-center">
-                  You currently have no courses, to get started click on <span className="font-bold">"Create Course"</span>!
+                  You currently have no approved courses, to get started click on <span className="font-bold">"Create Course"</span>!
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full text-md font-semibold mb-4 text-blue-700">
-                  {courses.map(course => (
+                  {approvedCourses.map(course => (
                     <div
                       key={course._id}
                       className="flex flex-col justify-between bg-white rounded-lg shadow p-4 min-h-[250px] max-w-xs w-full"
@@ -219,11 +225,11 @@ export default function Home() {
                         </Link>
                         <div className="flex gap-2">
                           <button
-                          className="px-3 py-1 bg-green-400 hover:bg-green-500 text-white rounded cursor-pointer"
-                          onClick={() => router.push(`/courses/${course._id}/edit`)}
-                        >
-                          Edit
-                        </button>
+                            className="px-3 py-1 bg-green-400 hover:bg-green-500 text-white rounded cursor-pointer"
+                            onClick={() => router.push(`/courses/${course._id}/edit`)}
+                          >
+                            Edit
+                          </button>
                           <button
                             className="text-xs px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded"
                             onClick={() => handleDelete(course._id)}
@@ -243,13 +249,89 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="mt-2 text-sm text-gray-700">
-                          <span className="font-semibold">Rating:</span>{" "}
-                          <span>
-                            {course.courseScore !== undefined && course.courseScore !== null
-                              ? course.courseScore.toFixed(1)
-                              : "N/A"}
-                          </span>
+                        <span className="font-semibold">Rating:</span>{" "}
+                        <span>
+                          {course.courseScore !== undefined && course.courseScore !== null
+                            ? course.courseScore.toFixed(1)
+                            : "N/A"}
+                        </span>
+                      </div>
+                      <div className="flex flex-row justify-between text-xs text-gray-600 mt-2">
+                        <span className="font-semibold">Level:</span> <span>{course.level}</span>
+                        <span className="font-semibold">Length:</span> <span>{course.predictedTime} hrs</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          {/* Submitted Courses Section */}
+          <div className="flex flex-row gap-8 mt-8">
+            <div className="flex-1 bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center">
+              <div className="text-2xl font-semibold mb-4 text-blue-700">Submitted Courses</div>
+              {submittedCourses.length === 0 ? (
+                <div className="text-lg text-gray-700 text-center">
+                  You have no pending or denied courses.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full text-md font-semibold mb-4 text-blue-700">
+                  {submittedCourses.map(course => (
+                    <div
+                      key={course._id}
+                      className="flex flex-col justify-between bg-white rounded-lg shadow p-4 min-h-[250px] max-w-xs w-full"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <Link
+                          href={`/courses/${course._id}`}
+                          className="text-xl font-bold text-blue-700 hover:underline"
+                        >
+                          {course.title}
+                        </Link>
+                        <div className="flex gap-2">
+                          <button
+                            className="px-3 py-1 bg-green-400 hover:bg-green-500 text-white rounded cursor-pointer"
+                            onClick={() => router.push(`/courses/${course._id}/edit`)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="text-xs px-2 py-1 bg-red-500 hover:bg-red-600 text-white rounded"
+                            onClick={() => handleDelete(course._id)}
+                          >
+                            Delete
+                          </button>
                         </div>
+                      </div>
+                      <div className="mb-2">
+                        <span className="inline-block text-xs font-bold uppercase rounded px-2 py-1"
+                          style={{
+                            backgroundColor:
+                              course.approved === "pending"
+                                ? "#facc15" // yellow-400
+                                : "#f87171" // red-400
+                          }}>
+                          {course.approved}
+                        </span>
+                      </div>
+                      Genre:
+                      <div className="flex mb-2">
+                        <div className="text-sm text-black bg-blue-400 rounded-lg uppercase font-bold">{course.genre}</div>
+                      </div>
+                      Description:
+                      <div className="flex-2 mb-2">
+                        <div className="bg-blue-100 rounded p-2 text-gray-800 text-sm truncate">
+                          {course.description}
+                        </div>
+                      </div>
+                      <div className="mt-2 text-sm text-gray-700">
+                        <span className="font-semibold">Rating:</span>{" "}
+                        <span>
+                          {course.courseScore !== undefined && course.courseScore !== null
+                            ? course.courseScore.toFixed(1)
+                            : "N/A"}
+                        </span>
+                      </div>
                       <div className="flex flex-row justify-between text-xs text-gray-600 mt-2">
                         <span className="font-semibold">Level:</span> <span>{course.level}</span>
                         <span className="font-semibold">Length:</span> <span>{course.predictedTime} hrs</span>
@@ -303,13 +385,13 @@ export default function Home() {
                         </div>
                       </div>
                       <div className="mt-2 text-sm text-gray-700">
-                          <span className="font-semibold">Rating:</span>{" "}
-                          <span>
-                            {course.courseScore !== undefined && course.courseScore !== null
-                              ? course.courseScore.toFixed(1)
-                              : "N/A"}
-                          </span>
-                        </div>
+                        <span className="font-semibold">Rating:</span>{" "}
+                        <span>
+                          {course.courseScore !== undefined && course.courseScore !== null
+                            ? course.courseScore.toFixed(1)
+                            : "N/A"}
+                        </span>
+                      </div>
                       <div className="flex flex-row justify-between text-xs text-gray-600 mt-2">
                         <span className="font-semibold">Level:</span> <span>{course.level}</span>
                         <span className="font-semibold">Length:</span> <span>{course.predictedTime} hrs</span>

@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
     const memberSince = user.createdAt ? user.createdAt.toISOString().split('T')[0] : '';
     const createdCourses = user.createdCourses?.length || 0;
-    const enrolledCourses = user.enrolledCourses;
+    const enrolledCourses = user.enrolledCourses ?? [];
 
     return NextResponse.json({
       userId: user._id,
@@ -49,8 +49,10 @@ export async function GET(req: NextRequest) {
       email: user.email,
       memberSince,
       createdCourses,
-      enrolledCourses,
+      enrolledCourses: user.enrolledCourses ?? [],
+      enrolledCoursesCount: user.enrolledCourses ? user.enrolledCourses.length : 0,
       userScore,
+      role: user.role,
     });
   } catch (err) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });

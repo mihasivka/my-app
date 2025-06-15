@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connect } from '@/dbConfig/db';
 import Course from '@/models/course';
 import jwt from 'jsonwebtoken';
+import User from '@/models/user';
 
 export async function POST(
   req: NextRequest,
@@ -28,13 +29,21 @@ export async function POST(
     return NextResponse.json({ error: 'Course not found' }, { status: 404 });
   }
 
-  // Ensure course.ratings is defined (if not, default to an empty array)
+  // Remove previous rating by this user if exists
   course.ratings = (course.ratings || []).filter(
     (r: any) => r.rater.toString() !== decoded.userId
   );
 
   // Add new rating
   course.ratings.push({ rater: decoded.userId, score });
+
+  // (Optional: If you want to update the user's ratings array as well)
+  await User.findByIdAndUpdate(decoded.userId, {
+    $pull: { ratings: { course: course._id } }
+  });
+  await User.findByIdAndUpdate(decoded.userId, {
+    $push: { ratings: { course: course._id, score } }
+  });
 
   // Recalculate the average and save it to courseScore
   const totalScore = course.ratings.reduce(

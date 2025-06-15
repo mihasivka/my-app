@@ -1,26 +1,36 @@
 'use client'
 
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState, useRef, useEffect } from "react";
-import Cookies from "js-cookie";
 
-export default function Home() {
+type Course = {
+  _id: string;
+  title: string;
+  description: string;
+  creator: string;
+  genre?: string;
+  level?: string;
+  predictedTime?: number | string;
+  courseScore?: number;
+  approved?: string;
+};
+
+export default function Approvals() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  // User state
   const [user, setUser] = useState<{
     username: string;
     email: string;
     memberSince: string;
     createdCourses: number;
     enrolledCourses: number;
-    enrolledCoursesCount?: number;
     userScore: number;
+    role?: string;
   } | null>(null);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch user info on mount
   useEffect(() => {
     async function fetchUser() {
       const res = await fetch('/api/profile', { credentials: 'include' });
@@ -30,9 +40,18 @@ export default function Home() {
       }
     }
     fetchUser();
+
+    async function fetchCourses() {
+      const res = await fetch('/api/approvals');
+      if (res.ok) {
+        const data = await res.json();
+        setCourses(data.courses || []);
+      }
+      setLoading(false);
+    }
+    fetchCourses();
   }, []);
 
-  
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -43,6 +62,11 @@ export default function Home() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  function capitalize(str: string) {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-400">
@@ -74,16 +98,20 @@ export default function Home() {
               My Courses
             </button>
           </Link>
+          {user && (user.role === "moderator" || user.role === "admin") && (
+            <Link href="/approvals">
+              <button className="text-2xl h-15 font-bold text-black px-4 focus:outline-none hover:bg-blue-300 rounded cursor-pointer">
+                Approvals
+              </button>
+            </Link>
+          )}
         </div>
-
         <div className="flex items-center gap-3">
-          {/* Username display in its own div */}
           {user && (
             <div className="text-lg font-semibold text-white mr-2">
               {user.username}
             </div>
           )}
-          {/* Profile icon and dropdown */}
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setOpen((prev) => !prev)}
@@ -102,7 +130,6 @@ export default function Home() {
             {open && (
               <div className="absolute -translate-x-27 translate-y-3 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
                 {user ? (
-                  // If logged in, show only Profile
                   <Link
                     href="/profile"
                     className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
@@ -111,7 +138,6 @@ export default function Home() {
                     Profile
                   </Link>
                 ) : (
-                  // If not logged in, show Login and Signup
                   <>
                     <Link
                       href="/login"
@@ -137,47 +163,67 @@ export default function Home() {
 
       <main className="flex-1 flex flex-col items-center text-black">
         <div className="w-[70%] mx-auto mt-8">
-          <div className="flex flex-col items-center mb-8">
-            <Image
-              src="/images/profile_icon.png"
-              alt="Profile"
-              width={100}
-              height={100}
-              className="rounded-full border-4 border-blue-300 mb-4"
-              priority
-            />
-            <div className="text-3xl font-bold text-blue-700 mb-2">
-              {user ? user.username : "Loading..."}
-            </div>
-            <div className="text-lg text-gray-700 mb-4">
-              {user ? user.email : ""}
-            </div>
-            <button className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-              Edit Profile
-            </button>
-            <button
-              className="px-6 py-2 mt-4 bg-red-500 text-white rounded hover:bg-red-600 transition cursor-pointer"
-              onClick={async () => {
-                await fetch('/api/logout', { method: 'POST', credentials: 'include' });
-                Cookies.remove("token"); // Remove token from browser
-                window.location.href = '/login';
-              }}
-            >
-              Logout
-            </button>
+          <div className="text-4xl font-bold text-center text-blue-700 drop-shadow mb-8">
+            Approvals
           </div>
-          <div className="flex flex-row gap-8 w-[70%] mx-auto">
-            {/* Profile Info */}
-            <div className="flex-1 bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center">
-              <div className="text-2xl font-semibold mb-4 text-blue-700">Profile Information</div>
-              <div className="w-full flex flex-col gap-2 text-lg text-blue-900">
-                <div><span className="font-bold">Member since:</span> {user ? user.memberSince : ""}</div>
-                <div><span className="font-bold">Courses created:</span> {user ? user.createdCourses : ""}</div>
-                <div><span className="font-bold">Enrolled courses:</span> {user ? user.enrolledCoursesCount : ""}</div>
-                <div><span className="font-bold">User score:</span> {user ? user.userScore : ""}</div>
+          <div className="bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center">
+            <div className="text-2xl font-semibold mb-2 text-blue-700">Pending Courses</div>
+            {loading ? (
+              <div className="text-blue-900">Loading...</div>
+            ) : courses.length === 0 ? (
+              <div className="text-blue-900">No courses awaiting approval.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full text-md font-semibold mb-4 text-blue-700">
+                {courses.map(course => (
+                  <div
+                    key={course._id}
+                    className="flex flex-col justify-between bg-white rounded-lg shadow p-4 min-h-[250px] max-w-xs w-full"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <Link
+                        href={`/courses/${course._id}`}
+                        className="text-xl font-bold text-blue-700 hover:underline"
+                      >
+                        {course.title}
+                      </Link>
+                      <span className="ml-auto text-xs text-gray-700">
+                        By:{" "}
+                        <Link
+                          href={`/profile/${course.creator}`}
+                          className="text-blue-600 hover:underline"
+                        >
+                          {course.creator}
+                        </Link>
+                      </span>
+                    </div>
+                    Genre:
+                    <div className="flex mb-2">
+                      <span className="inline-block text-sm text-black bg-blue-400 rounded-lg uppercase font-bold px-2 py-0.5">
+                        {course.genre}
+                      </span>
+                    </div>
+                    Description:
+                    <div className="flex-2 mb-2">
+                      <div className="bg-blue-100 rounded p-2 text-gray-800 text-sm truncate">
+                        {course.description}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm text-gray-700">
+                      <span className="font-semibold">Rating:</span>{" "}
+                      <span>
+                        {course.courseScore !== undefined && course.courseScore !== null
+                          ? Number(course.courseScore).toFixed(1)
+                          : "N/A"}
+                      </span>
+                    </div>
+                    <div className="flex flex-row justify-between text-xs text-gray-600 mt-2">
+                      <span className="font-semibold">Level:</span> <span>{course.level}</span>
+                      <span className="font-semibold">Length:</span> <span>{course.predictedTime} hrs</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-            
+            )}
           </div>
         </div>
       </main>

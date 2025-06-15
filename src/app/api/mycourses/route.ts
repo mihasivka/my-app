@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   // Here we populate the 'creator' field so we can later display the username.
   const user = await User.findById(decoded.userId).populate({
     path: 'createdCourses',
-    select: 'title description genre level predictedTime courseScore creator',
+    select: 'title description genre level predictedTime courseScore creator approved',
     populate: { path: 'creator', select: 'username' },
   });
   if (!user) {
@@ -39,6 +39,7 @@ export async function GET(req: NextRequest) {
     predictedTime: course.predictedTime,
     courseScore: course.courseScore ?? 0,
     creator: course.creator?.username || "Unknown",
+    approved: course.approved,
   }));
 
   return NextResponse.json({ courses: formattedCourses }, { status: 200 });
