@@ -41,10 +41,10 @@ export async function GET(
 
 export async function PUT(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await connect();
-  const { id } = context.params;
+  const { id } = await params;
 
   // Optional: Authenticate user and check if they are the creator
   const token = req.cookies.get('token')?.value;

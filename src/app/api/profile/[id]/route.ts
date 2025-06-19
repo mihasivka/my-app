@@ -5,10 +5,10 @@ import Course from '@/models/course';
 
 export async function GET(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await connect();
-  const { id } = await context.params;
+  const { id } = await params;
 
   // Find user by username
   const user = (await User.findOne({ username: id }).lean()) as any;
