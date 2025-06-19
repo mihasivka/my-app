@@ -79,7 +79,9 @@ export default function CoursePage() {
 
   // Check enrollment
   const enrolledCourseIds = Array.isArray(user?.enrolledCourses)
-    ? user.enrolledCourses.map((c: any) => (typeof c === "string" ? c : c._id))
+    ? user.enrolledCourses.map((c: string | { _id: string }) =>
+        typeof c === "string" ? c : c._id
+      )
     : [];
   const isEnrolled = enrolledCourseIds.includes(course._id);
 

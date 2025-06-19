@@ -130,18 +130,7 @@ export default function Home() {
   }, []);
 
   // Define allowed sort keys
-  type Course = {
-    _id: string;
-    title: string;
-    description: string;
-    creator: string;
-    genre?: string;
-    level?: string;
-    predictedTime?: number;
-    courseScore?: number;
-  };
-
-  type SortKey = "title" | "genre" | "courseScore" | "level" | "predictedTime";
+    type SortKey = "title" | "genre" | "courseScore" | "level" | "predictedTime";
 
   // Sorting logic
   const sortedCourses = [...searchedCourses].sort((a, b) => {

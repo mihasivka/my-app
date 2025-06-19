@@ -3,8 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState, useRef, useEffect } from "react";
-import Cookies from "js-cookie";
-import { useRouter } from "next/navigation";
+
 
 type TopCourse = {
   _id: string;

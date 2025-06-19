@@ -11,7 +11,7 @@ export default function RateCoursePage() {
 
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [user, setUser] = useState<{ username: string } | null>(null);
+  const [user] = useState<{ username: string } | null>(null);
 
   const [score, setScore] = useState(5);
   const [loading, setLoading] = useState(false);
