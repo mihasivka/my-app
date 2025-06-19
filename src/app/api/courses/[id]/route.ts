@@ -5,10 +5,10 @@ import Course from '@/models/course';
 
 export async function GET(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await connect();
-  const { id } = await context.params; // <-- Await params
+  const { id } = await params; // <-- Await params
 
   try {
     const course = await Course.findById(id).lean();
