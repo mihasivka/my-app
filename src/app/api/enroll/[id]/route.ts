@@ -6,9 +6,10 @@ import User from '@/models/user';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await connect();
+  const { id } = await params;
 
   const token = req.cookies.get('token')?.value;
   if (!token || !process.env.JWT_SECRET) {
@@ -22,7 +23,7 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 
-  const courseId = params.id;
+  const courseId = id;
 
   // Check if course exists
   const course = await Course.findById(courseId);

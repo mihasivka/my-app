@@ -4,8 +4,13 @@ import { connect } from '@/dbConfig/db';
 import Course from '@/models/course';
 import User from '@/models/user';
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest, 
+ { params }: { params: Promise<{ id: string }> }
+) {
   await connect();
+  const { id } = await params;
+  
   const token = req.cookies.get('token')?.value;
   if (!token || !process.env.JWT_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -18,7 +23,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 
-  const courseId = params.id;
+  const courseId = id;
 
   // Remove course from user's createdCourses
   await User.findByIdAndUpdate(decoded.userId, {

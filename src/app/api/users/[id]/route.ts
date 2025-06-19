@@ -6,10 +6,10 @@ import jwt from 'jsonwebtoken';
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await connect();
-  const { id } = params;
+  const { id } = await params;
 
   // Authenticate moderator/admin
   const token = req.cookies.get('token')?.value;

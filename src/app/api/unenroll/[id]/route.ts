@@ -5,10 +5,10 @@ import jwt from 'jsonwebtoken';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await connect();
-  const { id: courseId } = params;
+  const { id: courseId } =await params;
 
   const token = req.cookies.get('token')?.value;
   if (!token || !process.env.JWT_SECRET) {
