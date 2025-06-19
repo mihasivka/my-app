@@ -3,7 +3,7 @@ import { connect } from '@/dbConfig/db';
 import User from '@/models/user';
 import Course from '@/models/course';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   await connect();
 
   // Find users with at least one created course and role 'user'
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   // For each user, count created courses and calculate userScore
   const usersWithScores = await Promise.all(
-    users.map(async (user: any) => {
+    users.map(async (user: { _id: string; username: string }) => {
       const courses = await Course.find({ creator: user._id }).lean();
       if (!courses.length) return null; // skip users with no courses
 

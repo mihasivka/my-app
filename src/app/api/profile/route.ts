@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     const courses = await Course.find({ _id: { $in: user.createdCourses } });
 
     // Gather all ratings from all courses
-    let allScores: number[] = [];
+    const allScores: number[] = [];
     courses.forEach(course => {
       if (course.ratings && Array.isArray(course.ratings)) {
         allScores.push(...course.ratings.map((r: { score: number }) => r.score));
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
     const memberSince = user.createdAt ? user.createdAt.toISOString().split('T')[0] : '';
     const createdCourses = user.createdCourses?.length || 0;
-    const enrolledCourses = user.enrolledCourses ?? [];
+    //const enrolledCourses = user.enrolledCourses ?? [];
 
     return NextResponse.json({
       userId: user._id,
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
       userScore,
       role: user.role,
     });
-  } catch (err) {
+  } catch (error) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 }

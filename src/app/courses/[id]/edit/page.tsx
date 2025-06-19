@@ -24,7 +24,7 @@ export default function EditCoursePage() {
   const [success, setSuccess] = useState("");
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [user, setUser] = useState<{
+  const [user] = useState<{
     username: string;
     email: string;
     memberSince: string;

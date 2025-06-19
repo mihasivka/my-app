@@ -18,7 +18,7 @@ export async function POST(
   let decoded: { userId: string };
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET) as { userId: string };
-  } catch (err) {
+  } catch (error) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 

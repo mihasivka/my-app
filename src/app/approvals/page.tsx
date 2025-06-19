@@ -63,10 +63,6 @@ export default function Approvals() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  function capitalize(str: string) {
-    if (!str) return "";
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  }
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-400">
