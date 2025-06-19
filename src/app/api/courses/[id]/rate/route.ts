@@ -6,10 +6,10 @@ import User from '@/models/user';
 
 export async function POST(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   await connect();
-  const { id } = context.params;
+  const { id } = await params;
   const { score } = await req.json();
 
   // (Assuming you already verify token and decode it)
