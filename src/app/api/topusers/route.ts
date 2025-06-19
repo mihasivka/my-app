@@ -11,7 +11,7 @@ export async function GET() {
 
   // For each user, count created courses and calculate userScore
   const usersWithScores = await Promise.all(
-    users.map(async (user: { _id: string; username: string }) => {
+    users.map(async (user) => {
       const courses = await Course.find({ creator: user._id }).lean();
       if (!courses.length) return null; // skip users with no courses
 
