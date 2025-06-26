@@ -18,11 +18,44 @@ export default function RateCoursePage() {
   const [error, setError] = useState("");
   const [course, setCourse] = useState<{ title: string; creator: string } | null>(null);
 
+  const [language, setLanguage] = useState<"en" | "sl">("en");
+
+  // Translation dictionary
+  const dict = {
+    courses: { en: "Courses", sl: "Tečaji" },
+    myCourses: { en: "My Courses", sl: "Moji tečaji" },
+    profile: { en: "Profile", sl: "Profil" },
+    login: { en: "Login", sl: "Prijava" },
+    signup: { en: "Signup", sl: "Registracija" },
+    rateCourse: { en: "Rate this Course", sl: "Oceni ta tečaj" },
+    loadingCourse: { en: "Loading course info...", sl: "Nalaganje podatkov o tečaju..." },
+    courseBy: { en: "This is a course:", sl: "To je tečaj:" },
+    by: { en: "by:", sl: "avtor:" },
+    rateLabel: { en: "Rate the Course (1-5):", sl: "Oceni tečaj (1-5):" },
+    submitting: { en: "Submitting...", sl: "Pošiljanje..." },
+    submitRating: { en: "Submit Rating", sl: "Pošlji oceno" },
+    failedSubmit: { en: "Failed to submit rating.", sl: "Pošiljanje ocene ni uspelo." },
+    copyright: {
+      en: "© 2025 SIS 3 project, Miha Sivka. All rights reserved.",
+      sl: "© 2025 projekt SIS 3, Miha Sivka. Vse pravice pridržane.",
+    },
+  };
+
+  const t = (key: keyof typeof dict) => dict[key][language];
+
+  // Persist language selection
+  useEffect(() => {
+    const savedLang = localStorage.getItem("lang");
+    if (savedLang === "en" || savedLang === "sl") setLanguage(savedLang);
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("lang", language);
+  }, [language]);
+
   useEffect(() => {
     fetch(`/api/courses/${id}/rate`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
-        console.log("Data from /rate:", data);
         setCourse({ title: data.course.title, creator: data.course.creator });
       })
       .catch(() => setCourse(null));
@@ -42,9 +75,23 @@ export default function RateCoursePage() {
     if (res.ok) {
       router.push(`/courses/${id}`);
     } else {
-      setError("Failed to submit rating.");
+      setError(t("failedSubmit"));
     }
   };
+
+  // Flag click handler
+  const toggleLanguage = () => setLanguage(language === "en" ? "sl" : "en");
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-400">
@@ -69,16 +116,28 @@ export default function RateCoursePage() {
           </Link>
           <Link href="/courses">
             <button className="text-2xl h-15 font-bold text-black px-4 focus:outline-none bg-transparent hover:bg-blue-300 rounded cursor-pointer">
-              Courses
+              {t("courses")}
             </button>
           </Link>
           <Link href="/mycourses">
             <button className="text-2xl h-15 font-bold text-black px-4 focus:outline-none bg-transparent hover:bg-blue-300 rounded cursor-pointer">
-              My Courses
+              {t("myCourses")}
             </button>
           </Link>
         </div>
         <div className="flex items-center gap-3">
+          {/* Flag button in top right */}
+          <button
+            onClick={toggleLanguage}
+            className="cursor-pointer focus:outline-none left-30 top-3 rounded-full p-2 transition duration-300"
+            aria-label="Toggle language"
+          >
+            {language === "en" ? (
+              <span role="img" aria-label="Slovenian flag" style={{ fontSize: 32 }}>🇸🇮</span>
+            ) : (
+              <span role="img" aria-label="English flag" style={{ fontSize: 32 }}>🇬🇧</span>
+            )}
+          </button>
           {/* Username display */}
           {user && (
             <div className="text-lg font-semibold text-white mr-2">
@@ -109,7 +168,7 @@ export default function RateCoursePage() {
                     className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
                     onClick={() => setOpen(false)}
                   >
-                    Profile
+                    {t("profile")}
                   </Link>
                 ) : (
                   <>
@@ -118,14 +177,14 @@ export default function RateCoursePage() {
                       className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
                       onClick={() => setOpen(false)}
                     >
-                      Login
+                      {t("login")}
                     </Link>
                     <Link
                       href="/signup"
                       className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
                       onClick={() => setOpen(false)}
                     >
-                      Signup
+                      {t("signup")}
                     </Link>
                   </>
                 )}
@@ -138,18 +197,18 @@ export default function RateCoursePage() {
       {/* Main */}
       <main className="flex-1 flex flex-col items-center justify-center text-black">
         <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow w-96 mt-10">
-          <h2 className="text-2xl font-bold mb-4 text-blue-700">Rate this Course</h2>
+          <h2 className="text-2xl font-bold mb-4 text-blue-700">{t("rateCourse")}</h2>
           <div className="mb-4 text-black font-semibold text-lg text-center">
             {course ? (
               <>
-                This is a course: <span className="hover:underline">{course.title}</span> by:{" "}
+                {t("courseBy")} <span className="hover:underline">{course.title}</span> {t("by")}{" "}
                 <span className="hover:underline">{course.creator}</span>
               </>
             ) : (
-              "Loading course info..."
+              t("loadingCourse")
             )}
           </div>
-          <label className="block mb-2 font-semibold">Rate the Course (1-5):</label>
+          <label className="block mb-2 font-semibold">{t("rateLabel")}</label>
           <div className="flex gap-2 mt-2">
             {[1, 2, 3, 4, 5].map((val) => (
               <label key={val} className="flex flex-col items-center">
@@ -172,14 +231,14 @@ export default function RateCoursePage() {
             className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 cursor-pointer"
             disabled={loading}
           >
-            {loading ? "Submitting..." : "Submit Rating"}
+            {loading ? t("submitting") : t("submitRating")}
           </button>
         </form>
       </main>
 
       {/* Footer */}
       <footer className="p-10 w-80 h-24 text-gray-600 justify-items-center object-bottom self-center border-t border-gray-300">
-        <p className="text-center">© 2025 SIS 3 project, Miha Sivka. All rights reserved.</p>
+        <p className="text-center">{t("copyright")}</p>
       </footer>
     </div>
   );

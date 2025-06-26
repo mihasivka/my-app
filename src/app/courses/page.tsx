@@ -9,6 +9,7 @@ export default function Home() {
   const menuRef = useRef<HTMLDivElement>(null);
   const [sortBy, setSortBy] = useState(""); // "" means no sorting, or set a default
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [language, setLanguage] = useState<"en" | "sl">("en");
 
   // User state
   const [user, setUser] = useState<{
@@ -48,6 +49,53 @@ export default function Home() {
   const [pendingSearch, setPendingSearch] = useState("");
   const [search, setSearch] = useState("");
 
+  // Translation dictionary
+  const dict = {
+    courses: { en: "Courses", sl: "Tečaji" },
+    myCourses: { en: "My Courses", sl: "Moji tečaji" },
+    approvals: { en: "Approvals", sl: "Odobritve" },
+    profile: { en: "Profile", sl: "Profil" },
+    login: { en: "Login", sl: "Prijava" },
+    signup: { en: "Signup", sl: "Registracija" },
+    searchFilters: { en: "Search & Filters", sl: "Iskanje in filtri" },
+    searchPlaceholder: { en: "Search courses...", sl: "Išči tečaje..." },
+    search: { en: "Search", sl: "Išči" },
+    filters: { en: "Filters:", sl: "Filtri:" },
+    category: { en: "Category", sl: "Zvrst" },
+    all: { en: "All", sl: "Vse" },
+    difficulty: { en: "Difficulty", sl: "Stopnja" },
+    length: { en: "Length", sl: "Dolžina" },
+    sortBy: { en: "Sort by:", sl: "Razvrsti po:" },
+    none: { en: "None", sl: "Brez" },
+    name: { en: "Name", sl: "Ime" },
+    genre: { en: "Genre", sl: "Zvrst" },
+    rating: { en: "Rating", sl: "Ocena" },
+    level: { en: "Level", sl: "Stopnja" },
+    courseLength: { en: "Length", sl: "Dolžina" },
+    topUsers: { en: "Top Users", sl: "Najboljši uporabniki" },
+    noTopUsers: { en: "No top users found.", sl: "Ni najdenih najboljših uporabnikov." },
+    createdCourses: { en: "Created Courses", sl: "Ustvarjeni tečaji" },
+    viewProfile: { en: "View Profile", sl: "Poglej profil" },
+    by: { en: "By:", sl: "Avtor:" },
+    description: { en: "Description", sl: "Opis" },
+    noCourses: { en: "No courses found.", sl: "Ni najdenih tečajev." },
+    copyright: {
+      en: "© 2025 SIS 3 project, Miha Sivka. All rights reserved.",
+      sl: "© 2025 projekt SIS 3, Miha Sivka. Vse pravice pridržane.",
+    },
+  };
+
+  const t = (key: keyof typeof dict) => dict[key][language];
+
+  // Persist language selection
+  useEffect(() => {
+    const savedLang = localStorage.getItem("lang");
+    if (savedLang === "en" || savedLang === "sl") setLanguage(savedLang);
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("lang", language);
+  }, [language]);
+
   // Get unique options from courses
   const categoryOptions = [
     "",
@@ -71,11 +119,11 @@ export default function Home() {
 
   // Filtered courses
   const filteredCourses = courses.filter(course =>
-  course.approved === "approved" && // Only show approved courses
-  (filterCategory === "" || course.genre === filterCategory) &&
-  (filterDifficulty === "" || course.level === filterDifficulty) &&
-  (filterLength === "" || String(course.predictedTime) === filterLength)
-);
+    course.approved === "approved" &&
+    (filterCategory === "" || course.genre === filterCategory) &&
+    (filterDifficulty === "" || course.level === filterDifficulty) &&
+    (filterLength === "" || String(course.predictedTime) === filterLength)
+  );
 
   const searchedCourses = filteredCourses.filter(course =>
     course.title.toLowerCase().includes(search.toLowerCase())
@@ -130,7 +178,7 @@ export default function Home() {
   }, []);
 
   // Define allowed sort keys
-    type SortKey = "title" | "genre" | "courseScore" | "level" | "predictedTime";
+  type SortKey = "title" | "genre" | "courseScore" | "level" | "predictedTime";
 
   // Sorting logic
   const sortedCourses = [...searchedCourses].sort((a, b) => {
@@ -159,9 +207,12 @@ export default function Home() {
       : String(valB).localeCompare(String(valA), undefined, { sensitivity: "base" });
   });
 
+  // Flag click handler
+  const toggleLanguage = () => setLanguage(language === "en" ? "sl" : "en");
+
   return (
     <div className="flex flex-col min-h-screen bg-blue-400">
-      <header className="p-3 w-full flex flex-row items-center justify-between bg-blue-600">
+      <header className="p-3 w-full flex flex-row items-center justify-between bg-blue-600 relative">
         <div className="flex flex-row gap-4 divide-gray-500">
           <Link href="/home">
             <button
@@ -181,23 +232,35 @@ export default function Home() {
           </Link>
           <Link href="/courses">
             <button className="text-2xl h-15 font-bold text-black px-4 focus:outline-none bg-transparent hover:bg-blue-300 rounded cursor-pointer">
-              Courses
+              {t("courses")}
             </button>
           </Link>
           <Link href="/mycourses">
             <button className="text-2xl h-15 font-bold text-black px-4 focus:outline-none bg-transparent hover:bg-blue-300 rounded cursor-pointer">
-              My Courses
+              {t("myCourses")}
             </button>
           </Link>
           {user && (user.role === "moderator" || user.role === "admin") && (
             <Link href="/approvals">
               <button className="text-2xl h-15 font-bold text-black px-4 focus:outline-none hover:bg-blue-300 rounded cursor-pointer">
-                Approvals
+                {t("approvals")}
               </button>
             </Link>
           )}
         </div>
         <div className="flex items-center gap-3">
+          {/* Flag button in top right */}
+          <button
+            onClick={toggleLanguage}
+            className="cursor-pointer focus:outline-none left-30 top-3 rounded-full p-2 transition duration-300"
+            aria-label="Toggle language"
+          >
+            {language === "en" ? (
+              <span role="img" aria-label="Slovenian flag" style={{ fontSize: 32 }}>🇸🇮</span>
+            ) : (
+              <span role="img" aria-label="English flag" style={{ fontSize: 32 }}>🇬🇧</span>
+            )}
+          </button>
           {/* Username display in its own div */}
           {user && (
             <div className="text-lg font-semibold text-white mr-2">
@@ -229,7 +292,7 @@ export default function Home() {
                     className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
                     onClick={() => setOpen(false)}
                   >
-                    Profile
+                    {t("profile")}
                   </Link>
                 ) : (
                   // If not logged in, show Login and Signup
@@ -239,14 +302,14 @@ export default function Home() {
                       className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
                       onClick={() => setOpen(false)}
                     >
-                      Login
+                      {t("login")}
                     </Link>
                     <Link
                       href="/signup"
                       className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
                       onClick={() => setOpen(false)}
                     >
-                      Signup
+                      {t("signup")}
                     </Link>
                   </>
                 )}
@@ -259,20 +322,20 @@ export default function Home() {
       <main className="flex-1 flex flex-col items-center text-black">
         <div className="w-[70%] mx-auto mt-8">
           <div className="text-4xl font-bold text-center text-blue-700 drop-shadow mb-8">
-            Courses
+            {t("courses")}
           </div>
           <div className="flex flex-row gap-8">
             {/* Main Content */}
             <div className="flex-1 flex flex-col">
               {/* Search & Filters */}
               <div className="bg-blue-200 rounded-xl shadow-lg p-6 mb-6 flex flex-col items-center">
-                <div className="text-2xl font-semibold mb-2 text-blue-700">Search & Filters</div>
+                <div className="text-2xl font-semibold mb-2 text-blue-700">{t("searchFilters")}</div>
                 <div className="mb-4 flex gap-2 w-full">
                   <input
                     type="text"
                     value={pendingSearch}
                     onChange={e => setPendingSearch(e.target.value)}
-                    placeholder="Search courses..."
+                    placeholder={t("searchPlaceholder")}
                     className="border rounded px-3 py-1 w-full bg-white"
                   />
                   <button
@@ -280,15 +343,15 @@ export default function Home() {
                     onClick={() => setSearch(pendingSearch)}
                     className="bg-blue-600 text-white px-4 py-1 rounded"
                   >
-                    Search
+                    {t("search")}
                   </button>
                 </div>
-                <h1 className="text-lg font-semibold text-blue-700 mt-4">Filters:</h1>
+                <h1 className="text-lg font-semibold text-blue-700 mt-4">{t("filters")}</h1>
                 {/* Filter Modules */}
                 <div className="flex gap-4 w-full mt-2">
                   {/* Category Filter */}
                   <div className="flex flex-col flex-1">
-                    <label className="font-semibold mb-1">Category</label>
+                    <label className="font-semibold mb-1">{t("category")}</label>
                     <select
                       value={filterCategory}
                       onChange={e => setFilterCategory(e.target.value)}
@@ -296,14 +359,14 @@ export default function Home() {
                     >
                       {categoryOptions.map(opt => (
                         <option key={opt} value={opt}>
-                          {opt === "" ? "All" : capitalize(opt ?? "")}
+                          {opt === "" ? t("all") : capitalize(opt ?? "")}
                         </option>
                       ))}
                     </select>
                   </div>
                   {/* Difficulty Filter */}
                   <div className="flex flex-col flex-1">
-                    <label className="font-semibold mb-1">Difficulty</label>
+                    <label className="font-semibold mb-1">{t("difficulty")}</label>
                     <select
                       value={filterDifficulty}
                       onChange={e => setFilterDifficulty(e.target.value)}
@@ -311,14 +374,14 @@ export default function Home() {
                     >
                       {difficultyOptions.map(opt => (
                         <option key={opt} value={opt}>
-                          {opt === "" ? "All" : opt}
+                          {opt === "" ? t("all") : opt}
                         </option>
                       ))}
                     </select>
                   </div>
                   {/* Length Filter */}
                   <div className="flex flex-col flex-1">
-                    <label className="font-semibold mb-1">Length</label>
+                    <label className="font-semibold mb-1">{t("length")}</label>
                     <select
                       value={filterLength}
                       onChange={e => setFilterLength(e.target.value)}
@@ -326,7 +389,7 @@ export default function Home() {
                     >
                       {lengthOptions.map(opt => (
                         <option key={opt} value={opt}>
-                          {opt === "" ? "All" : opt}
+                          {opt === "" ? t("all") : opt}
                         </option>
                       ))}
                     </select>
@@ -336,18 +399,18 @@ export default function Home() {
               
               {/* Sort Options */}
               <div className="flex gap-4 items-center mb-4">
-                <label className="font-semibold">Sort by:</label>
+                <label className="font-semibold">{t("sortBy")}</label>
                 <select
                   value={sortBy}
                   onChange={e => setSortBy(e.target.value)}
                   className="border rounded px-2 py-1 bg-blue-200"
                 >
-                  <option value="">None</option>
-                  <option value="title">Name</option>
-                  <option value="genre">Genre</option>
-                  <option value="courseScore">Rating</option>
-                  <option value="level">Level</option>
-                  <option value="predictedTime">Length</option>
+                  <option value="">{t("none")}</option>
+                  <option value="title">{t("name")}</option>
+                  <option value="genre">{t("genre")}</option>
+                  <option value="courseScore">{t("rating")}</option>
+                  <option value="level">{t("level")}</option>
+                  <option value="predictedTime">{t("courseLength")}</option>
                 </select>
                 <button
                   type="button"
@@ -360,9 +423,9 @@ export default function Home() {
 
               {/* All Courses List */}
               <div className="bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center">
-                <div className="text-2xl font-semibold mb-2 text-blue-700">Courses</div>
+                <div className="text-2xl font-semibold mb-2 text-blue-700">{t("courses")}</div>
                 {filteredCourses.length === 0 ? (
-                  <div className="text-blue-900">No courses found.</div>
+                  <div className="text-blue-900">{t("noCourses")}</div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full text-md font-semibold mb-4 text-blue-700">
                     {sortedCourses.map(course => (
@@ -378,7 +441,7 @@ export default function Home() {
                             {course.title}
                           </Link>
                           <span className="ml-auto text-xs text-gray-700">
-                            By:{" "}
+                            {t("by")}{" "}
                             <Link
                               href={`/profile/${course.creator}`}
                               className="text-blue-600 hover:underline"
@@ -387,13 +450,13 @@ export default function Home() {
                             </Link>
                           </span>
                         </div>
-                        Genre:
+                        {t("genre")}:
                         <div className="flex mb-2">
                           <span className="inline-block text-sm text-black bg-blue-400 rounded-lg uppercase font-bold px-2 py-0.5">
                             {course.genre}
                           </span>
                         </div>
-                        Description:
+                        {t("description")}:
                         <div className="flex-2 mb-2">
                           <div className="bg-blue-100 rounded p-2 text-gray-800 text-sm truncate">
                             {course.description}
@@ -401,7 +464,7 @@ export default function Home() {
                         </div>
                         {/* New Rating Display */}
                         <div className="mt-2 text-sm text-gray-700">
-                          <span className="font-semibold">Rating:</span>{" "}
+                          <span className="font-semibold">{t("rating")}:</span>{" "}
                           <span>
                             {course.courseScore !== undefined && course.courseScore !== null
                               ? course.courseScore.toFixed(1)
@@ -409,8 +472,8 @@ export default function Home() {
                           </span>
                         </div>
                         <div className="flex flex-row justify-between text-xs text-gray-600 mt-2">
-                          <span className="font-semibold">Level:</span> <span>{course.level}</span>
-                          <span className="font-semibold">Length:</span> <span>{course.predictedTime} hrs</span>
+                          <span className="font-semibold">{t("level")}:</span> <span>{course.level}</span>
+                          <span className="font-semibold">{t("courseLength")}:</span> <span>{course.predictedTime} hrs</span>
                         </div>
                       </div>
                     ))}
@@ -418,13 +481,13 @@ export default function Home() {
                 )}
               </div>
             </div>
-            {/* Top users */}
+            {/* Top users, only shows users who have a rated course */}
             <div className="flex-1 max-w-xs bg-blue-200 rounded-xl shadow-lg p-6 flex flex-col items-center">
-              <div className="text-2xl font-semibold mb-2 text-blue-700">Top Users</div>
+              <div className="text-2xl font-semibold mb-2 text-blue-700">{t("topUsers")}</div>
               <div className="w-full flex flex-col gap-4">
                 {topUsers.length === 0 ? (
                   <div className="text-blue-900 text-center text-sm py-4">
-                    No top users found.
+                    {t("noTopUsers")}
                   </div>
                 ) : (
                   topUsers.map(user => (
@@ -440,18 +503,18 @@ export default function Home() {
                           {user.username}
                         </Link>
                         <div className="text-xs text-gray-700">
-                          Score: {user.userScore}
+                          {t("rating")}: {user.userScore}
                         </div>
                       </div>
                       <div className="flex flex-col gap-1">
                         <span className="text-sm text-gray-600">
-                          Created Courses: {user.createdCourses}
+                          {t("createdCourses")}: {user.createdCourses}
                         </span>
                         <Link
                           href={`/profile/${user.username}`}
                           className="text-blue-600 hover:underline text-xs text-center"
                         >
-                          View Profile
+                          {t("viewProfile")}
                         </Link>
                       </div>
                     </div>
@@ -465,7 +528,7 @@ export default function Home() {
 
       <footer className="p-10 w-80 h-24 text-gray-600 justify-items-center object-bottom self-center border-t border-gray-300">
         <p className="text-center">
-          © 2025 SIS 3 project, Miha Sivka. All rights reserved.
+          {t("copyright")}
         </p>
       </footer>
     </div>

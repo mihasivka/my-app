@@ -12,16 +12,52 @@ export default function Home() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [language, setLanguage] = useState<"en" | "sl">("en");
 
   // User state
-    const [user, setUser] = useState<{
-      username: string;
-      email: string;
-      memberSince: string;
-      createdCourses: number;
-      enrolledCourses: number;
-      userScore: number;
-    } | null>(null);
+  const [user, setUser] = useState<{
+    username: string;
+    email: string;
+    memberSince: string;
+    createdCourses: number;
+    enrolledCourses: number;
+    userScore: number;
+  } | null>(null);
+
+  // Translation dictionary
+  const dict = {
+    courses: { en: "Courses", sl: "Tečaji" },
+    myCourses: { en: "My Courses", sl: "Moji tečaji" },
+    profile: { en: "Profile", sl: "Profil" },
+    login: { en: "Login", sl: "Prijava" },
+    signup: { en: "Signup", sl: "Registracija" },
+    createCourse: { en: "Create a New Course", sl: "Ustvari nov tečaj" },
+    courseTitle: { en: "Course Title", sl: "Naslov tečaja" },
+    description: { en: "Description", sl: "Opis" },
+    category: { en: "Category", sl: "Kategorija" },
+    selectCategory: { en: "Select category", sl: "Izberi kategorijo" },
+    difficulty: { en: "Difficulty", sl: "Težavnost" },
+    length: { en: "Length", sl: "Dolžina" },
+    selectLength: { en: "Select length", sl: "Izberi dolžino" },
+    create: { en: "Create Course", sl: "Ustvari tečaj" },
+    success: { en: "Course created successfully!", sl: "Tečaj uspešno ustvarjen!" },
+    failed: { en: "Failed to create course.", sl: "Ustvarjanje tečaja ni uspelo." },
+    copyright: {
+      en: "© 2025 SIS 3 project, Miha Sivka. All rights reserved.",
+      sl: "© 2025 projekt SIS 3, Miha Sivka. Vse pravice pridržane.",
+    },
+  };
+
+  const t = (key: keyof typeof dict) => dict[key][language];
+
+  // Persist language selection
+  useEffect(() => {
+    const savedLang = localStorage.getItem("lang");
+    if (savedLang === "en" || savedLang === "sl") setLanguage(savedLang);
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("lang", language);
+  }, [language]);
 
   // Restrict access to logged-in users
   useEffect(() => {
@@ -32,15 +68,15 @@ export default function Home() {
   }, [router]);
 
   useEffect(() => {
-  async function fetchUser() {
-    const res = await fetch('/api/profile', { credentials: 'include' });
-    if (res.ok) {
-      const data = await res.json();
-      setUser(data);
+    async function fetchUser() {
+      const res = await fetch('/api/profile', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+      }
     }
-  }
-  fetchUser();
-}, []);
+    fetchUser();
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -75,13 +111,16 @@ export default function Home() {
     });
 
     if (res.ok) {
-      setSuccess("Course created successfully!");
+      setSuccess(t("success"));
       form.reset();
     } else {
       const result = await res.json();
-      setError(result.error || "Failed to create course.");
+      setError(result.error || t("failed"));
     }
   };
+
+  // Flag click handler
+  const toggleLanguage = () => setLanguage(language === "en" ? "sl" : "en");
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-400">
@@ -105,16 +144,28 @@ export default function Home() {
           </Link>
           <Link href="/courses">
             <button className="text-2xl h-15 font-bold text-black px-4 focus:outline-none bg-transparent hover:bg-blue-300 rounded cursor-pointer">
-              Courses
+              {t("courses")}
             </button>
           </Link>
           <Link href="/mycourses">
             <button className="text-2xl h-15 font-bold text-black px-4 focus:outline-none bg-transparent hover:bg-blue-300 rounded cursor-pointer">
-              My Courses
+              {t("myCourses")}
             </button>
           </Link>
         </div>
         <div className="flex items-center gap-3">
+          {/* Flag button in top right */}
+          <button
+            onClick={toggleLanguage}
+            className="cursor-pointer focus:outline-none left-30 top-3 rounded-full p-2 transition duration-300"
+            aria-label="Toggle language"
+          >
+            {language === "en" ? (
+              <span role="img" aria-label="Slovenian flag" style={{ fontSize: 32 }}>🇸🇮</span>
+            ) : (
+              <span role="img" aria-label="English flag" style={{ fontSize: 32 }}>🇬🇧</span>
+            )}
+          </button>
           {/* Username display in its own div */}
           {user && (
             <div className="text-lg font-semibold text-white mr-2">
@@ -146,7 +197,7 @@ export default function Home() {
                     className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
                     onClick={() => setOpen(false)}
                   >
-                    Profile
+                    {t("profile")}
                   </Link>
                 ) : (
                   // If not logged in, show Login and Signup
@@ -156,14 +207,14 @@ export default function Home() {
                       className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
                       onClick={() => setOpen(false)}
                     >
-                      Login
+                      {t("login")}
                     </Link>
                     <Link
                       href="/signup"
                       className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
                       onClick={() => setOpen(false)}
                     >
-                      Signup
+                      {t("signup")}
                     </Link>
                   </>
                 )}
@@ -176,14 +227,14 @@ export default function Home() {
       <main className="flex-1 flex flex-col items-center text-black">
         <div className="w-[70%] mx-auto mt-8">
           <div className="text-4xl font-bold text-center text-blue-700 drop-shadow mb-8">
-            Create a New Course
+            {t("createCourse")}
           </div>
           <div className="bg-blue-200 rounded-xl shadow-lg p-8 flex flex-col items-center">
             <form className="flex flex-col gap-6 w-full max-w-lg font-sans" onSubmit={handleSubmit}>
               {error && <div className="text-red-600 text-center">{error}</div>}
               {success && <div className="text-green-600 text-center">{success}</div>}
               <label className="flex flex-col">
-                <span className="mb-1 font-medium">Course Title</span>
+                <span className="mb-1 font-medium">{t("courseTitle")}</span>
                 <input
                   type="text"
                   name="title"
@@ -192,7 +243,7 @@ export default function Home() {
                 />
               </label>
               <label className="flex flex-col">
-                <span className="mb-1 font-medium">Description</span>
+                <span className="mb-1 font-medium">{t("description")}</span>
                 <textarea
                   name="description"
                   rows={4}
@@ -201,14 +252,13 @@ export default function Home() {
                 />
               </label>
               <label className="flex flex-col">
-                <span className="mb-1 font-medium">Category</span>
+                <span className="mb-1 font-medium">{t("category")}</span>
                 <select
                   name="category"
                   className="border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 font-sans"
                   required
                 >
-                  
-                  <option value="">Select category</option>
+                  <option value="">{t("selectCategory")}</option>
                   <option value="programming">Programming</option>
                   <option value="languages">Languages</option>
                   <option value="science">Science</option>
@@ -224,7 +274,7 @@ export default function Home() {
                 </select>
               </label>
               <label className="flex flex-col">
-                <span className="mb-1 font-medium">Difficulty</span>
+                <span className="mb-1 font-medium">{t("difficulty")}</span>
                 <div className="flex gap-2 mt-2">
                   {[1, 2, 3, 4, 5].map((level) => (
                     <label key={level} className="flex flex-col items-center font-sans">
@@ -241,13 +291,13 @@ export default function Home() {
                 </div>
               </label>
               <label className="flex flex-col">
-                <span className="mb-1 font-medium">Length</span>
+                <span className="mb-1 font-medium">{t("length")}</span>
                 <select
                   name="length"
                   className="border border-gray-300 rounded px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 font-sans"
                   required
                 >
-                  <option value="">Select length</option>
+                  <option value="">{t("selectLength")}</option>
                   <option value="1-10">1-10 hrs</option>
                   <option value="10-50">10-50 hrs</option>
                   <option value="50-100">50-100 hrs</option>
@@ -258,7 +308,7 @@ export default function Home() {
                 type="submit"
                 className="bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition font-sans cursor-pointer"
               >
-                Create Course
+                {t("create")}
               </button>
             </form>
           </div>
@@ -267,7 +317,7 @@ export default function Home() {
 
       <footer className="p-10 w-80 h-24 text-gray-600 justify-items-center object-bottom self-center border-t border-gray-300">
         <p className="text-center">
-          © 2025 SIS 3 project, Miha Sivka. All rights reserved.
+          {t("copyright")}
         </p>
       </footer>
     </div>

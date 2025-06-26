@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { connect } from '@/dbConfig/db';
-import User from '@/models/user';
-import Course from '@/models/course';
+import { NextRequest, NextResponse } from "next/server";
+import { connect } from "@/dbConfig/db";
+import User from "@/models/user";
+import Course from "@/models/course";
 
 export async function GET(
   req: NextRequest,
@@ -10,33 +10,49 @@ export async function GET(
   await connect();
   const { id } = await params;
 
-  // Find user by username
-  const user = (await User.findOne({ username: id }).lean()) as any;
-  if (!user || Array.isArray(user)) {
-    return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  // Find user by username or ID
+  const user = await User.findOne({ username: id })
+    .populate({
+      path: "createdCourses",
+      select: "title description genre level predictedTime courseScore approved",
+    })
+    .lean() as any;
+
+  if (!user) {
+    return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  // Find courses created by this user, including courseScore
-  const courses = await Course.find({ creator: user._id })
-    .select('_id title description genre level predictedTime courseScore creator')
-    .lean();
+  // Format createdCourses to include approved
+  const createdCourses = (Array.isArray(user.createdCourses) ? user.createdCourses : []).map((course: any) => ({
+    _id: course._id,
+    title: course.title,
+    description: course.description,
+    genre: course.genre,
+    level: course.level,
+    predictedTime: course.predictedTime,
+    courseScore: course.courseScore ?? 0,
+    approved: course.approved,
+  }));
 
-  // Calculate userScore: average of all courseScores, excluding 0.0 and null/undefined
-  const validScores = (courses as any[])
-    .map(c => typeof c.courseScore === "number" ? c.courseScore : null)
-    .filter((score): score is number => score !== null && score !== undefined && score !== 0);
+  // Calculate userScore as average of approved courses' courseScore
+  const approvedCourses = createdCourses.filter(
+    (c: { approved: string; courseScore: number }) =>
+      c.approved === "approved" && typeof c.courseScore === "number"
+  );
 
   const userScore =
-    validScores.length > 0
-      ? parseFloat(
-          (validScores.reduce((a, b) => a + b, 0) / validScores.length).toFixed(2)
-        )
+    approvedCourses.length > 0
+      ? approvedCourses.reduce(
+          (sum: number, c: { courseScore: number }) => sum + c.courseScore,
+          0
+        ) / approvedCourses.length
       : null;
 
   return NextResponse.json({
     username: user.username,
-    memberSince: user.createdAt ? user.createdAt.toISOString().split('T')[0] : null,
+    memberSince: user.createdAt,
     userScore,
-    createdCourses: courses,
+    createdCourses,
+    // ...other user fields
   });
 }

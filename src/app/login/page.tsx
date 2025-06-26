@@ -2,13 +2,42 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState, useRef, useEffect } from "react"; 
-import Cookies from "js-cookie"; // Install with: npm install js-cookie
-
+import React, { useState, useRef, useEffect } from "react";
+import Cookies from "js-cookie";
 
 export default function Home() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [language, setLanguage] = useState<"en" | "sl">("en");
+
+  // Translation dictionary
+  const dict = {
+    courses: { en: "Courses", sl: "Tečaji" },
+    myCourses: { en: "My Courses", sl: "Moji tečaji" },
+    login: { en: "Login", sl: "Prijava" },
+    signup: { en: "Signup", sl: "Registracija" },
+    loginTitle: { en: "Login to your account to get started!", sl: "Prijavite se v svoj račun za začetek!" },
+    logIn: { en: "Log in", sl: "Prijava" },
+    email: { en: "Email", sl: "E-pošta" },
+    password: { en: "Password", sl: "Geslo" },
+    submit: { en: "Submit", sl: "Pošlji" },
+    loginFailed: { en: "Login failed", sl: "Prijava ni uspela" },
+    copyright: {
+      en: "© 2025 SIS 3 project, Miha Sivka. All rights reserved.",
+      sl: "© 2025 projekt SIS 3, Miha Sivka. Vse pravice pridržane.",
+    },
+  };
+
+  const t = (key: keyof typeof dict) => dict[key][language];
+
+  // Persist language selection
+  useEffect(() => {
+    const savedLang = localStorage.getItem("lang");
+    if (savedLang === "en" || savedLang === "sl") setLanguage(savedLang);
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("lang", language);
+  }, [language]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -33,18 +62,18 @@ export default function Home() {
       body: JSON.stringify({ email, password }),
     });
 
- if (res.ok) {
-      // Option 1: If your API returns a JWT token
+    if (res.ok) {
       const data = await res.json();
-      Cookies.set("token", data.token, { expires: 7 }); // 7 days
-      // Optionally redirect or update UI
+      Cookies.set("token", data.token, { expires: 7 });
       window.location.href = "/home";
       console.log("Login successful");
     } else {
-      // Handle error
-      alert("Login failed");
+      alert(t("loginFailed"));
     }
   };
+
+  // Flag click handler
+  const toggleLanguage = () => setLanguage(language === "en" ? "sl" : "en");
 
   return (
     <div className="flex flex-col min-h-screen bg-blue-400 font-sans">
@@ -68,64 +97,78 @@ export default function Home() {
           </Link>
           <Link href="/courses">
             <button className="text-2xl h-15 font-bold text-black px-4 focus:outline-none bg-transparent hover:bg-blue-300 rounded cursor-pointer">
-              Courses
+              {t("courses")}
             </button>
           </Link>
           <Link href="/mycourses">
             <button className="text-2xl h-15 font-bold text-black px-4 focus:outline-none bg-transparent hover:bg-blue-300 rounded cursor-pointer">
-              My Courses
+              {t("myCourses")}
             </button>
           </Link>
         </div>
-        <div className="relative mr-3" ref={menuRef}>
+        <div className="flex items-center gap-3">
+          {/* Flag button in top right */}
           <button
-            onClick={() => setOpen((prev) => !prev)}
-            className="focus:outline-none"
-            aria-label="Open profile menu"
+            onClick={toggleLanguage}
+            className="cursor-pointer focus:outline-none left-30 top-3 rounded-full p-2 transition duration-300"
+            aria-label="Toggle language"
           >
-            <Image
-              src="/images/profile_icon.png"
-              alt="Profile"
-              width={40}
-              height={40}
-              className="rounded-full cursor-pointer border border-gray-300 hover:border-blue-600 transition font-bowlby"
-              priority
-            />
+            {language === "en" ? (
+              <span role="img" aria-label="Slovenian flag" style={{ fontSize: 32 }}>🇸🇮</span>
+            ) : (
+              <span role="img" aria-label="English flag" style={{ fontSize: 32 }}>🇬🇧</span>
+            )}
           </button>
-          {open && (
-            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
-              
-              <Link
-                href="/login"
-                className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
-                onClick={() => setOpen(false)}
-              >
-                Login
-              </Link>
-              <Link
-                href="/signup"
-                className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
-                onClick={() => setOpen(false)}
-              >
-                Signup
-              </Link>
-            </div>
-          )}
+          {/* Profile icon and dropdown */}
+          <div className="relative mr-3" ref={menuRef}>
+            <button
+              onClick={() => setOpen((prev) => !prev)}
+              className="focus:outline-none"
+              aria-label="Open profile menu"
+            >
+              <Image
+                src="/images/profile_icon.png"
+                alt="Profile"
+                width={40}
+                height={40}
+                className="rounded-full cursor-pointer border border-gray-300 hover:border-blue-600 transition font-bowlby"
+                priority
+              />
+            </button>
+            {open && (
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded shadow-lg z-50">
+                <Link
+                  href="/login"
+                  className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
+                  onClick={() => setOpen(false)}
+                >
+                  {t("login")}
+                </Link>
+                <Link
+                  href="/signup"
+                  className="block px-4 py-2 text-gray-800 hover:bg-blue-100"
+                  onClick={() => setOpen(false)}
+                >
+                  {t("signup")}
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       <main className="flex-1 flex flex-col text-black font-sans">
         <div className="text-4xl w-full p-2 font-bold text-center text-blue-700 drop-shadow">
-          Login to your account to get started!
+          {t("loginTitle")}
         </div>
         <div className="flex h-full gap-2 items-center justify-center mt-8 ml-2 mr-2">
-          <form 
+          <form
             className="flex flex-col gap-4 w-[350px] p-6 bg-blue-200 rounded-xl shadow-lg font-sans"
             onSubmit={handleSubmit}
-            >
-            <div className="text-2xl mb-2 text-center font-bold">Log in</div>
+          >
+            <div className="text-2xl mb-2 text-center font-bold">{t("logIn")}</div>
             <label className="flex flex-col">
-              <span className="mb-1 font-medium">Email</span>
+              <span className="mb-1 font-medium">{t("email")}</span>
               <input
                 type="email"
                 name="email"
@@ -134,7 +177,7 @@ export default function Home() {
               />
             </label>
             <label className="flex flex-col">
-              <span className="mb-1 font-medium">Password</span>
+              <span className="mb-1 font-medium">{t("password")}</span>
               <input
                 type="password"
                 name="password"
@@ -146,7 +189,7 @@ export default function Home() {
               type="submit"
               className="mt-2 bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 transition font-sans"
             >
-              Submit
+              {t("submit")}
             </button>
           </form>
         </div>
@@ -154,7 +197,7 @@ export default function Home() {
 
       <footer className="p-10 w-80 h-24 text-gray-600 justify-items-center object-bottom self-center border-t border-gray-300 font-sans">
         <p className="text-center">
-          © 2025 SIS 3 project, Miha Sivka. All rights reserved.
+          {t("copyright")}
         </p>
       </footer>
     </div>
