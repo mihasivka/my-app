@@ -1,10 +1,4 @@
 This is my Systems 3 Project
 
-run to start app
-
-```bash
-npm run dev
-
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the app.
+Test the site on:
+https://my-1d01br9hq-mihasivkas-projects.vercel.app/home
