@@ -35,9 +35,10 @@ export async function GET(
   }));
 
   // Calculate userScore as average of approved courses' courseScore
+  // Only count courses that are approved AND have a courseScore > 0
   const approvedCourses = createdCourses.filter(
     (c: { approved: string; courseScore: number }) =>
-      c.approved === "approved" && typeof c.courseScore === "number"
+      c.approved === "approved" && typeof c.courseScore === "number" && c.courseScore > 0
   );
 
   const userScore =
