@@ -29,7 +29,6 @@ export default function Home() {
     profile: { en: "Profile", sl: "Profil" },
     login: { en: "Login", sl: "Prijava" },
     signup: { en: "Signup", sl: "Registracija" },
-    editProfile: { en: "Edit Profile", sl: "Uredi profil" },
     logout: { en: "Logout", sl: "Odjava" },
     profileInfo: { en: "Profile Information", sl: "Podatki o profilu" },
     memberSince: { en: "Member since:", sl: "Član od:" },
@@ -199,10 +198,7 @@ export default function Home() {
             </div>
             <div className="text-lg text-gray-700 mb-4">
               {user ? user.email : ""}
-            </div>
-            <button className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-              {t("editProfile")}
-            </button>
+            </div>            
             <button
               className="px-6 py-2 mt-4 bg-red-500 text-white rounded hover:bg-red-600 transition cursor-pointer"
               onClick={async () => {
